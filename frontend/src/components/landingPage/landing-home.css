@@ -1,0 +1,19 @@
+.land-page{
+    text-align: center;
+}
+
+
+.restuarant-list {
+  padding: 20px;
+  margin: 5px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+}
+
+.restaurant-card{
+  gap: 20px;
+  border: 1px solid;
+  margin: 15px;
+  
+}
