@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './login.css'
+import Navbar from '../navbar/navbar.js';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
@@ -28,6 +29,7 @@ function Login() {
     
     return (
         <div className="layout">
+            <Navbar />
            <form onSubmit={handleLogin}>
             <div className="form-group">
                 <label htmlFor="exampleInputUsername"> Username </label>
