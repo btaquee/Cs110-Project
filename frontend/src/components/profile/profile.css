@@ -1,0 +1,20 @@
+.profile-layout {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.underline {
+  text-decoration: underline;
+  font-weight: bold;
+}
+
+div .sameline {
+    display: flex;
+  align-items: center;  /* aligns text and button vertically */
+  gap: 10px;   
+}
+
+.btn {
+    margin-left: 25px;
+}

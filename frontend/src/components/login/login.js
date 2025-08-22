@@ -1,12 +1,14 @@
 import React, { useState, useEffect } from 'react';
-import './login.css'
-import Navbar from '../navbar/navbar.js';
+import './login.css';
+// import Navbar from '../navbar/navbar.js';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import { useNavigate } from "react-router-dom";
 
-function Login() {
+function Login( {setUser} ) {
     const [username, setusername] = useState("");
     const [password, setpassword] = useState("");
+    const navigate = useNavigate();
 
     const handleLogin = async (event) => {
         event.preventDefault();
@@ -24,15 +26,24 @@ function Login() {
 
     const data = await response.json();
     console.log("Login response:", data);
+
+    if (response.ok) {
+        setUser(data.user);
+        navigate("/")
+    }
+    else {
+        alert("Login failed: " + data.message);
+    }
 };
     
     
     return (
         <div className="layout">
-            <Navbar />
+            {/* <Navbar /> */}
            <form onSubmit={handleLogin}>
             <div className="form-group">
-                <label htmlFor="exampleInputUsername"> Username </label>
+                <label htmlFor="exampleInputUsername"> 
+                    Username </label>
                 <input 
                 type="text" 
                 className="form-control" 
@@ -43,7 +54,8 @@ function Login() {
                 />
             </div>
             <div className="form-group">
-                <label htmlFor="exampleInputPassword1">Password</label>
+                <label htmlFor="exampleInputPassword1">
+                    Password</label>
                 <input 
                 type="password" 
                 className="form-control" 
