@@ -7,9 +7,9 @@ function Navbar( { user } ) {
     return (
         <div className="navbar">
           <div id="left-side">
-            <a href="App.js">
+            <Link to="/">
               <img className="logo" src="/images/Logo.png" alt="Logo"></img>
-            </a>
+            </Link>
              <Link to="/about">About</Link>
           </div>
           {user ? (

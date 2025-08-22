@@ -23,8 +23,6 @@ function App() {
 
     </Routes>
   </Router>
-  
-   {/* <LandingPage/> */}
 
   </div>
 
