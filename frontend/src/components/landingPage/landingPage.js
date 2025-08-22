@@ -1,4 +1,4 @@
-import Navbar from '../navbar/navbar.js';
+// import Navbar from '../navbar/navbar.js';
 import React, { useState, useEffect } from 'react';
 import './landing-home.css'
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -41,7 +41,7 @@ useEffect(() => {
 return (
     <div className="land-page">
     
-    <Navbar/>
+    {/* <Navbar/> */}
 
         <div className="Search">
           <h1>Search Restaurants/Users (MongoDB)</h1>

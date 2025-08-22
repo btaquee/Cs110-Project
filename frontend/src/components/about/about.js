@@ -1,13 +1,13 @@
 import './about.css';
-import Navbar from '../navbar/navbar.js';
+// import Navbar from '../navbar/navbar.js';
 
 function About() {
     
     return (
         <div>
-            <Navbar/>
+            {/* <Navbar/> */}
             
-            <p> Hello</p>
+            <p> Work on about</p>
         </div>
     )
 };
