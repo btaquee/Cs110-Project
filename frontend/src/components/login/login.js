@@ -4,6 +4,7 @@ import './login.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom"
 
 function Login( {setUser} ) {
     const [username, setusername] = useState("");
@@ -28,11 +29,12 @@ function Login( {setUser} ) {
     console.log("Login response:", data);
 
     if (response.ok) {
+        console.log("Login successful", data);
         setUser(data.user);
         navigate("/")
     }
     else {
-        alert("Login failed: " + data.message);
+        alert("Login failed: " + data.error);
     }
 };
     
@@ -42,6 +44,7 @@ function Login( {setUser} ) {
             {/* <Navbar /> */}
            <form onSubmit={handleLogin}>
             <div className="form-group">
+                <h1 className="header"> Login </h1>
                 <label htmlFor="exampleInputUsername"> 
                     Username </label>
                 <input 
@@ -50,6 +53,7 @@ function Login( {setUser} ) {
                 id="exampleInputUsername" 
                 aria-describedby="UsernameHelp"
                 value={username}
+                placeholder='guy123'
                 onChange={(event) => setusername(event.target.value)}
                 />
             </div>
@@ -61,6 +65,7 @@ function Login( {setUser} ) {
                 className="form-control" 
                 id="exampleInputPassword1" 
                 value={password}
+                placeholder='password123'
                 onChange={(event) => setpassword(event.target.value)}
                 />
             </div>
@@ -72,6 +77,11 @@ function Login( {setUser} ) {
             </div>
             <button type="submit" className="btn btn-primary">Submit</button>
             </form>
+
+            <div className="register"> 
+                <p> Don't have an account? <Link to="/register"> Sign up here </Link> </p>
+            </div>
+
         </div>
     );
 
