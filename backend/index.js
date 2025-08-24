@@ -104,7 +104,7 @@ app.post('/user/login', async (req, res) =>{
     if (user.password !== password) {
       return res.status(401).json({error: "Password does not match "});
     }
-    //Will return user info for profiling?
+    //Will return user info for profiling
     res.json({
       user: {
         username: user.username,
@@ -118,3 +118,39 @@ app.post('/user/login', async (req, res) =>{
         res.status(500).json({error: "Error checking usernames/password"}); 
     }
 });
+
+app.post('/user/register', async (req, res) => {
+  try {
+
+    const { username, password } = req.body;
+
+    const existingUser = await db.collection("users").findOne({username: username});
+
+    if (existingUser) {
+      return res.status(409).json({ error: "Username already exists"});
+    }
+
+    const newAccount ={
+      username: username,
+      password: password, 
+      admin: false, 
+      favRestuarant: "",
+      favCuisine: "", 
+    };
+
+    //insert a new user into the database
+    await db.collection("users").insertOne(newAccount);
+
+    res.status(201).json({
+      message: "Registration successful!",
+      newUser: {
+        username: newAccount.username,
+      }
+
+    })
+
+  } catch (err) {
+        console.error("Error registering new user: ", err);
+        res.status(500).json({error: "Error registering new user"}); 
+      }
+    });

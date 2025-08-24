@@ -7,6 +7,7 @@ import Navbar from './components/navbar/navbar.js';
 import About from './components/about/about.js';
 import Friends from './components/friends/friends.js';
 import Profile from './components/profile/profile.js';
+import Register from './components/login/register.js';
 
 function App() {
 
@@ -22,6 +23,7 @@ function App() {
       <Route path="/about" element={<About />} />
       <Route path="/friends" element={<Friends />} />
       <Route path="/profile" element={<Profile user={user}/>} />
+      <Route path="/register" element={<Register />} />
       {/* <Route path="/navbar" element={<Navbar />} /> */}
 
     </Routes>

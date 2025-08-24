@@ -1,0 +1,24 @@
+.layout {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin-top: 15px;
+
+}
+
+.header {
+    margin-bottom: 50px;
+    text-align: center;
+}
+
+.center {
+    margin-bottom: 15px;
+    margin-top: 15px;
+    text-align: center
+}
+
+.form-control { 
+    width: 600px;
+    border: solid 3px #ced4da;
+}
