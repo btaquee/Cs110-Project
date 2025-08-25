@@ -154,3 +154,49 @@ app.post('/user/register', async (req, res) => {
         res.status(500).json({error: "Error registering new user"}); 
       }
     });
+
+// --- REVIEWS ENDPOINTS ---
+
+// Get all reviews for a specific restaurant
+app.get('/reviews/restaurant/:restaurantId', async (req, res) => {
+  try {
+    const restaurantId = parseInt(req.params.restaurantId);
+    
+    const reviews = await db.collection('reviews')
+      .find({ restaurantId: restaurantId })
+      .sort({ dateCreated: -1 }) // Sort by newest first
+      .toArray();
+
+    // Calculate average rating
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const averageRating = reviews.length > 0 ? (totalRating / reviews.length).toFixed(1) : 0;
+
+    res.json({
+      reviews: reviews,
+      averageRating: parseFloat(averageRating),
+      totalReviews: reviews.length
+    });
+  } catch (err) {
+    console.error("Error fetching reviews:", err);
+    res.status(500).json({ error: "Error fetching reviews" });
+  }
+});
+
+// Get a specific user's review for a restaurant (if they have one)
+app.get('/reviews/user/:username/restaurant/:restaurantId', async (req, res) => {
+  try {
+    const { username, restaurantId } = req.params;
+    const restaurantIdNum = parseInt(restaurantId);
+    
+    const userReview = await db.collection('reviews')
+      .findOne({ 
+        username: username, 
+        restaurantId: restaurantIdNum 
+      });
+
+    res.json({ userReview: userReview });
+  } catch (err) {
+    console.error("Error fetching user review:", err);
+    res.status(500).json({ error: "Error fetching user review" });
+  }
+});

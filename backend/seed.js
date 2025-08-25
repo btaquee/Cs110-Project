@@ -26,13 +26,54 @@ const usersToSeed = [
 
 ]
 
+// Sample reviews data
+const reviewsToSeed = [
+  {
+    reviewId: 1,
+    restaurantId: 1, // Sushi Place
+    restaurantName: 'Sushi Place',
+    username: 'admin123',
+    rating: 5,
+    comment: 'Amazing sushi! Fresh and delicious.',
+    dateCreated: new Date('2024-01-15')
+  },
+  {
+    reviewId: 2,
+    restaurantId: 1, // Sushi Place
+    restaurantName: 'Sushi Place',
+    username: 'lopez123',
+    rating: 4,
+    comment: 'Great quality, but a bit expensive.',
+    dateCreated: new Date('2024-01-20')
+  },
+  {
+    reviewId: 3,
+    restaurantId: 2, // Pizza Planet
+    restaurantName: 'Pizza Planet',
+    username: 'cruzl123',
+    rating: 5,
+    comment: 'Best pizza in town!',
+    dateCreated: new Date('2024-01-10')
+  },
+  {
+    reviewId: 4,
+    restaurantId: 2, // Pizza Planet
+    restaurantName: 'Pizza Planet',
+    username: 'guy123',
+    rating: 3,
+    comment: 'Good pizza, but service was slow.',
+    dateCreated: new Date('2024-01-25')
+  }
+];
+
 async function runSeed() {
   try {
     await client.connect();
     const db = client.db(dbName);
     
     const restaurants = db.collection('restaurants');
-    const users = db.collection('users')
+    const users = db.collection('users');
+    const reviews = db.collection('reviews');
 
     await restaurants.deleteMany({});
     await restaurants.insertMany(restaurantsToSeed);
@@ -40,8 +81,12 @@ async function runSeed() {
     await users.deleteMany({});
     await users.insertMany(usersToSeed);
 
+    await reviews.deleteMany({});
+    await reviews.insertMany(reviewsToSeed);
+
     console.log("Successfully seeded the restaurants collection.");
     console.log("Successfully seeded the users collection.");
+    console.log("Successfully seeded the reviews collection.");
 
   } catch (err) {
     console.log(err.stack);
