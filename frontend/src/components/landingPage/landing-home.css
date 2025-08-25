@@ -13,7 +13,32 @@
 
 .restaurant-card{
   gap: 20px;
-  border: 1px solid;
+  border: 1px solid #ddd;
+  border-radius: 8px;
   margin: 15px;
-  
+  padding: 20px;
+  background: white;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.restaurant-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.restaurant-card h3 {
+  margin: 0 0 10px 0;
+  color: #333;
+  font-size: 1.3em;
+}
+
+.restaurant-card p {
+  margin: 5px 0;
+  color: #666;
+}
+
+.restaurant-card small {
+  color: #007bff;
+  font-style: italic;
 }
