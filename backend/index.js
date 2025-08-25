@@ -69,11 +69,38 @@ app.get('/search', async (req, res) => {
 
 app.get('/restaurants', async (req, res) => {
     try {
-        const results = await db.collection('restaurants').find({}).toArray();
-        res.json(results);
+        const restaurants = await db.collection('restaurants').find({}).toArray();
+        
+        // Calculate average ratings for each restaurant
+        const restaurantsWithRatings = await Promise.all(restaurants.map(async (restaurant) => {
+            const reviews = await db.collection('reviews')
+                .find({ restaurantId: restaurant.id })
+                .toArray();
+            
+            if (reviews.length === 0) {
+                return {
+                    ...restaurant,
+                    averageRating: 0,
+                    totalReviews: 0,
+                    hasReviews: false
+                };
+            }
+            
+            const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+            const averageRating = (totalRating / reviews.length).toFixed(1);
+            
+            return {
+                ...restaurant,
+                averageRating: parseFloat(averageRating),
+                totalReviews: reviews.length,
+                hasReviews: true
+            };
+        }));
+        
+        res.json(restaurantsWithRatings);
     } catch (err) {
-        console.error("Error fetchin restaurants: ", err);
-        res.status(500).json({error: "Error fetching restuarants"});
+        console.error("Error fetching restaurants: ", err);
+        res.status(500).json({error: "Error fetching restaurants"});
     }
 });
 
@@ -154,3 +181,200 @@ app.post('/user/register', async (req, res) => {
         res.status(500).json({error: "Error registering new user"}); 
       }
     });
+
+// --- REVIEWS ENDPOINTS ---
+
+// Get all reviews for a specific restaurant
+app.get('/reviews/restaurant/:restaurantId', async (req, res) => {
+  try {
+    const restaurantId = parseInt(req.params.restaurantId);
+    
+    const reviews = await db.collection('reviews')
+      .find({ restaurantId: restaurantId })
+      .sort({ dateCreated: -1 }) // Sort by newest first
+      .toArray();
+
+    // Calculate average rating
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    const averageRating = reviews.length > 0 ? (totalRating / reviews.length).toFixed(1) : 0;
+
+    res.json({
+      reviews: reviews,
+      averageRating: parseFloat(averageRating),
+      totalReviews: reviews.length
+    });
+  } catch (err) {
+    console.error("Error fetching reviews:", err);
+    res.status(500).json({ error: "Error fetching reviews" });
+  }
+});
+
+// Get a specific user's review for a restaurant (if they have one)
+app.get('/reviews/user/:username/restaurant/:restaurantId', async (req, res) => {
+  try {
+    const { username, restaurantId } = req.params;
+    const restaurantIdNum = parseInt(restaurantId);
+    
+    const userReview = await db.collection('reviews')
+      .findOne({ 
+        username: username, 
+        restaurantId: restaurantIdNum 
+      });
+
+    res.json({ userReview: userReview });
+  } catch (err) {
+    console.error("Error fetching user review:", err);
+    res.status(500).json({ error: "Error fetching user review" });
+  }
+});
+
+// Create a new review
+app.post('/reviews', async (req, res) => {
+  try {
+    const { restaurantId, restaurantName, username, rating, comment } = req.body;
+
+    // Validate required fields
+    if (!restaurantId || !restaurantName || !username || !rating || !comment) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    // Validate rating range
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({ error: "Rating must be between 1 and 5" });
+    }
+
+    // Check if user already reviewed this restaurant
+    const existingReview = await db.collection('reviews')
+      .findOne({ 
+        username: username, 
+        restaurantId: parseInt(restaurantId) 
+      });
+
+    if (existingReview) {
+      return res.status(409).json({ error: "You have already reviewed this restaurant" });
+    }
+
+    // Get the next review ID
+    const lastReview = await db.collection('reviews')
+      .find({})
+      .sort({ reviewId: -1 })
+      .limit(1)
+      .toArray();
+    
+    const nextReviewId = lastReview.length > 0 ? lastReview[0].reviewId + 1 : 1;
+
+    // Create new review
+    const newReview = {
+      reviewId: nextReviewId,
+      restaurantId: parseInt(restaurantId),
+      restaurantName: restaurantName,
+      username: username,
+      rating: parseInt(rating),
+      comment: comment,
+      dateCreated: new Date()
+    };
+
+    const result = await db.collection('reviews').insertOne(newReview);
+
+    if (result.acknowledged) {
+      res.status(201).json({ 
+        message: "Review submitted successfully",
+        review: newReview
+      });
+    } else {
+      res.status(500).json({ error: "Failed to submit review" });
+    }
+
+  } catch (err) {
+    console.error("Error creating review:", err);
+    res.status(500).json({ error: "Error creating review" });
+  }
+});
+
+// Update an existing review
+app.put('/reviews/:reviewId', async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+    const { rating, comment } = req.body;
+
+    // Validate required fields
+    if (!rating || !comment) {
+      return res.status(400).json({ error: "Rating and comment are required" });
+    }
+
+    // Validate rating range
+    if (rating < 1 || rating > 5) {
+      return res.status(400).json({ error: "Rating must be between 1 and 5" });
+    }
+
+    // Find the review and check if it exists
+    const existingReview = await db.collection('reviews')
+      .findOne({ reviewId: parseInt(reviewId) });
+
+    if (!existingReview) {
+      return res.status(404).json({ error: "Review not found" });
+    }
+
+    // Update the review
+    const result = await db.collection('reviews')
+      .updateOne(
+        { reviewId: parseInt(reviewId) },
+        { 
+          $set: { 
+            rating: parseInt(rating), 
+            comment: comment,
+            dateUpdated: new Date()
+          } 
+        }
+      );
+
+    if (result.modifiedCount > 0) {
+      // Get the updated review
+      const updatedReview = await db.collection('reviews')
+        .findOne({ reviewId: parseInt(reviewId) });
+
+      res.json({ 
+        message: "Review updated successfully",
+        review: updatedReview
+      });
+    } else {
+      res.status(500).json({ error: "Failed to update review" });
+    }
+
+  } catch (err) {
+    console.error("Error updating review:", err);
+    res.status(500).json({ error: "Error updating review" });
+  }
+});
+
+// Delete a review
+app.delete('/reviews/:reviewId', async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+
+    // Find the review and check if it exists
+    const existingReview = await db.collection('reviews')
+      .findOne({ reviewId: parseInt(reviewId) });
+
+    if (!existingReview) {
+      return res.status(404).json({ error: "Review not found" });
+    }
+
+    // Delete the review
+    const result = await db.collection('reviews')
+      .deleteOne({ reviewId: parseInt(reviewId) });
+
+    if (result.deletedCount > 0) {
+      res.json({ 
+        message: "Review deleted successfully",
+        deletedReview: existingReview
+      });
+    } else {
+      res.status(500).json({ error: "Failed to delete review" });
+    }
+
+  } catch (err) {
+    console.error("Error deleting review:", err);
+    res.status(500).json({ error: "Error deleting review" });
+  }
+});

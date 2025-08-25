@@ -1,5 +1,6 @@
 // import Navbar from '../navbar/navbar.js';
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import './landing-home.css'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
@@ -8,7 +9,7 @@ import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 
 function LandingPage() {
-    
+    const navigate = useNavigate();
     const [searchQuery, setSearchQuery] = useState("");
     const [searchResults, setSearchResults] = useState([]);
 
@@ -35,6 +36,10 @@ useEffect(() => {
   })
   .catch(err => console.error("Error fetching restaurants:", err));
 }, []);
+
+const handleRestaurantClick = (restaurantId) => {
+  navigate(`/restaurant/${restaurantId}`);
+};
 
 // const user = { username: "CoolGuy123" };    
 
@@ -80,17 +85,25 @@ return (
             {restaurants.length > 0 ? (
               <div className="restaurants-grid">
                 {restaurants.map(restaurant => (
-                  <div className="restaurant-card" key={restaurant._id}>
-                    {restaurant.name}
-                    <br/>
-                    Cuisine: {restaurant.cuisine}
-                    <br/>
-                    Rating: {restaurant.rating}
+                  <div 
+                    className="restaurant-card" 
+                    key={restaurant._id}
+                    onClick={() => handleRestaurantClick(restaurant.id)}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    <h3>{restaurant.name}</h3>
+                    <p>Cuisine: {restaurant.cuisine}</p>
+                    {restaurant.hasReviews ? (
+                      <p>Rating: {restaurant.averageRating} ⭐ ({restaurant.totalReviews} reviews)</p>
+                    ) : (
+                      <p>No ratings yet</p>
+                    )}
+                    <small>Click to see reviews</small>
                   </div>
                 ))}
               </div>
             ) : (
-              <p> No restuarants found.</p>
+              <p> No restaurants found.</p>
             )}
           </div>
           </div>
