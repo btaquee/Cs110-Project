@@ -135,8 +135,8 @@ app.post('/user/login', async (req, res) =>{
     res.json({
       user: {
         username: user.username,
-        favRestaurant: user.favRestaurant,
-        favCuisine: user.favCuisine
+        favRestaurant: user.favRestaurant || "",
+        favCuisine: user.favCuisine || ""
       }
     });
 
@@ -161,7 +161,7 @@ app.post('/user/register', async (req, res) => {
       username: username,
       password: password, 
       admin: false, 
-      favRestuarant: "",
+      favRestaurant: "",
       favCuisine: "", 
     };
 
@@ -172,6 +172,8 @@ app.post('/user/register', async (req, res) => {
       message: "Registration successful!",
       newUser: {
         username: newAccount.username,
+        favRestaurant: newAccount.favRestaurant,
+        favCuisine: newAccount.favCuisine
       }
 
     })
@@ -376,5 +378,160 @@ app.delete('/reviews/:reviewId', async (req, res) => {
   } catch (err) {
     console.error("Error deleting review:", err);
     res.status(500).json({ error: "Error deleting review" });
+  }
+});
+
+// Get available restaurants for profile selection
+app.get('/restaurants/names', async (req, res) => {
+  try {
+    const restaurants = await db.collection('restaurants')
+      .find({}, { projection: { name: 1, _id: 0 } })
+      .toArray();
+    
+    const restaurantNames = restaurants.map(r => r.name).sort();
+    res.json({ restaurants: restaurantNames });
+  } catch (err) {
+    console.error("Error fetching restaurant names:", err);
+    res.status(500).json({ error: "Error fetching restaurant names" });
+  }
+});
+
+// Get available cuisines for profile selection
+app.get('/cuisines', async (req, res) => {
+  try {
+    const cuisines = await db.collection('restaurants')
+      .distinct('cuisine');
+    
+    const sortedCuisines = cuisines.sort();
+    res.json({ cuisines: sortedCuisines });
+  } catch (err) {
+    console.error("Error fetching cuisines:", err);
+    res.status(500).json({ error: "Error fetching cuisines" });
+  }
+});
+
+// Fix existing users with typo in favRestaurant field (migration endpoint)
+app.put('/user/fix-typo', async (req, res) => {
+  try {
+    // Find users with the typo field and fix them
+    const result = await db.collection('users').updateMany(
+      { favRestuarant: { $exists: true } },
+      [
+        {
+          $set: {
+            favRestaurant: "$favRestuarant"
+          }
+        },
+        {
+          $unset: "favRestuarant"
+        }
+      ]
+    );
+
+    res.json({
+      message: "Database migration completed",
+      modifiedCount: result.modifiedCount
+    });
+  } catch (err) {
+    console.error("Error during migration:", err);
+    res.status(500).json({ error: "Error during migration" });
+  }
+});
+
+// --- USER PROFILE UPDATE ENDPOINTS ---
+
+// Update user's favorite restaurant
+app.put('/user/update-restaurant', async (req, res) => {
+  try {
+    const { username, favRestaurant } = req.body;
+
+    if (!username || !favRestaurant) {
+      return res.status(400).json({ error: "Username and favorite restaurant are required" });
+    }
+
+    // Validate that the restaurant exists in our database
+    const existingRestaurant = await db.collection('restaurants')
+      .findOne({ name: { $regex: new RegExp(`^${favRestaurant}$`, 'i') } });
+
+    if (!existingRestaurant) {
+      return res.status(400).json({ 
+        error: "Restaurant not found. Please select from our available restaurants." 
+      });
+    }
+
+    const result = await db.collection('users')
+      .updateOne(
+        { username: username },
+        { $set: { favRestaurant: existingRestaurant.name } }
+      );
+
+    if (result.modifiedCount > 0) {
+      // Get the updated user
+      const updatedUser = await db.collection('users')
+        .findOne({ username: username });
+
+      res.json({
+        message: "Favorite restaurant updated successfully",
+        user: {
+          username: updatedUser.username,
+          favRestaurant: updatedUser.favRestaurant || "",
+          favCuisine: updatedUser.favCuisine || ""
+        }
+      });
+    } else {
+      res.status(404).json({ error: "User not found or no changes made" });
+    }
+
+  } catch (err) {
+    console.error("Error updating favorite restaurant:", err);
+    res.status(500).json({ error: "Error updating favorite restaurant" });
+  }
+});
+
+// Update user's favorite cuisine
+app.put('/user/update-cuisine', async (req, res) => {
+  try {
+    const { username, favCuisine } = req.body;
+
+    if (!username || !favCuisine) {
+      return res.status(400).json({ error: "Username and favorite cuisine are required" });
+    }
+
+    // Validate that the cuisine exists in our database
+    const existingCuisine = await db.collection('restaurants')
+      .findOne({ cuisine: { $regex: new RegExp(`^${favCuisine}$`, 'i') } });
+
+    if (!existingCuisine) {
+      return res.status(400).json({ 
+        error: "Cuisine not found. Please select from our available cuisines." 
+      });
+    }
+
+    const result = await db.collection('users')
+      .updateOne(
+        { username: username },
+        { $set: { favCuisine: existingCuisine.cuisine } }
+      );
+
+    if (result.modifiedCount > 0) {
+      // Get the updated user
+      const updatedUser = await db.collection('users')
+        .findOne({ username: username });
+
+      res.json({
+        message: "Favorite cuisine updated successfully",
+        user: {
+          username: updatedUser.username,
+          favRestaurant: updatedUser.favRestaurant || "",
+          favCuisine: updatedUser.favCuisine || ""
+        }
+      });
+    } else {
+      res.status(404).json({ error: "User not found or no changes made" });
+    }
+
+  } catch (err) {
+    console.error("Error updating favorite cuisine:", err);
+    res.status(500).json({ error: "Error updating favorite cuisine" });
   }
 });
