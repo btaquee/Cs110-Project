@@ -1,5 +1,5 @@
 import './about.css';
-// import Navbar from '../navbar/navbar.js';
+import '../navbar/navbar.js';
 
 function About() {
   return (
@@ -54,17 +54,6 @@ function About() {
             </div>
           </div>
 
-          <div className="col-12 col-md-6 col-lg-3">
-            <div className="card h-100 shadow-sm">
-              <div className="card-body">
-                <h3 className="h5 card-title">Similar Items</h3>
-                <p className="card-text">
-                  When you view an item, see a curated list of similar options
-                  on the same page—just like Airbnb’s “Similar stays.”
-                </p>
-              </div>
-            </div>
-          </div>
 
           <div className="col-12 col-md-6 col-lg-3">
             <div className="card h-100 shadow-sm">
@@ -103,41 +92,7 @@ function About() {
         </ol>
       </section>
 
-      {/* RECOMMENDATION SYSTEM EXPLAINER */}
-      <section id="recs" className="mb-5">
-        <h2 className="h3 fw-bold mb-3">Our Recommendation System</h2>
-        <p className="mb-3">
-          We use an explainable, lightweight approach that blends
-          content-based signals with small personalization boosts:
-        </p>
-
-        <div className="about-callout bg-body-tertiary border rounded-4 p-3 mb-3">
-          <p className="mb-1"><span className="fw-semibold">Search ranking (per result):</span></p>
-          <pre className="mb-0">
-{`score = 2 × (title contains query)
-      + 1 × (description contains query)
-      + 1 × (category/tag match)
-      + 1 × (popularity/recency boost)
-      + 1 × (matches your favorites)
-      + 1 × (liked/viewed by your friends)`}
-          </pre>
-        </div>
-
-        <div className="about-callout bg-body-tertiary border rounded-4 p-3">
-          <p className="mb-1"><span className="fw-semibold">“Similar items” (on item page):</span></p>
-          <pre className="mb-0">
-{`similarity = overlap in tags/categories
-break ties with popularity and recency
-limit to 3–6 items for clarity`}
-          </pre>
-        </div>
-
-        <p className="mt-3 mb-0">
-          This keeps recommendations transparent and fast to compute while still
-          feeling personalized.
-        </p>
-      </section>
-
+      
       {/* TEAM */}
       <section className="mb-5">
         <h2 className="h3 fw-bold mb-3">Team</h2>
