@@ -1,0 +1,29 @@
+.about .hero {
+  background: linear-gradient(180deg, rgba(2,0,36,0) 0%, rgba(0,0,0,0.03) 100%);
+}
+
+.about-hero-img {
+  max-height: 140px;
+  object-fit: contain;
+}
+
+.about-steps {
+  margin-left: 1.2rem;
+}
+
+.about pre {
+  white-space: pre-wrap;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  font-size: 0.95rem;
+  line-height: 1.35;
+}
+
+.about-callout {
+  backdrop-filter: blur(2px);
+}
+
+.team-card .card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
