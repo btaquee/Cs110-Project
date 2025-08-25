@@ -23,7 +23,7 @@ function App() {
       <Route path="/login" element={<Login setUser={setUser} />} />
       <Route path="/about" element={<About />} />
       <Route path="/friends" element={<Friends />} />
-      <Route path="/profile" element={<Profile user={user}/>} />
+      <Route path="/profile" element={<Profile user={user} setUser={setUser}/>} />
       <Route path="/register" element={<Register />} />
       <Route path="/restaurant/:restaurantId" element={<RestaurantDetail user={user} />} />
       {/* <Route path="/navbar" element={<Navbar />} /> */}
