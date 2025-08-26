@@ -438,6 +438,87 @@ app.put('/user/fix-typo', async (req, res) => {
   }
 });
 
+// Get restaurant recommendations based on current restaurant and user preferences
+app.get('/restaurants/recommendations/:restaurantId', async (req, res) => {
+  try {
+    const { restaurantId } = req.params;
+    const { userCuisine } = req.query; // User's favorite cuisine from frontend
+
+    // Get the current restaurant to find its cuisine
+    const currentRestaurant = await db.collection('restaurants')
+      .findOne({ id: parseInt(restaurantId) });
+
+    if (!currentRestaurant) {
+      return res.status(404).json({ error: "Restaurant not found" });
+    }
+
+    const currentCuisine = currentRestaurant.cuisine;
+    
+    // Build recommendation query
+    let recommendationQuery = {
+      id: { $ne: parseInt(restaurantId) } // Exclude current restaurant
+    };
+
+    // If user has a favorite cuisine, prioritize restaurants matching both cuisines
+    if (userCuisine && userCuisine !== "") {
+      // Get all restaurants matching either cuisine
+      const allMatches = await db.collection('restaurants')
+        .find({
+          ...recommendationQuery,
+          cuisine: { $in: [currentCuisine, userCuisine] }
+        })
+        .sort({ rating: -1, name: 1 })
+        .toArray();
+
+      // Sort them manually: user's favorite cuisine first, then current cuisine
+      const sortedRecommendations = allMatches.sort((a, b) => {
+        const aIsUserFavorite = a.cuisine === userCuisine;
+        const bIsUserFavorite = b.cuisine === userCuisine;
+        const aIsCurrentCuisine = a.cuisine === currentCuisine;
+        const bIsCurrentCuisine = b.cuisine === currentCuisine;
+
+        // If both match user's favorite cuisine, sort by rating
+        if (aIsUserFavorite && bIsUserFavorite) {
+          return b.rating - a.rating;
+        }
+        // If only one matches user's favorite cuisine, prioritize it
+        if (aIsUserFavorite && !bIsUserFavorite) return -1;
+        if (!aIsUserFavorite && bIsUserFavorite) return 1;
+        // If both match current cuisine, sort by rating
+        if (aIsCurrentCuisine && bIsCurrentCuisine) {
+          return b.rating - a.rating;
+        }
+        // If only one matches current cuisine, prioritize it
+        if (aIsCurrentCuisine && !bIsCurrentCuisine) return -1;
+        if (!aIsCurrentCuisine && bIsCurrentCuisine) return 1;
+        // Default sort by rating
+        return b.rating - a.rating;
+      });
+
+      // Take only the first 10
+      const recommendations = sortedRecommendations.slice(0, 10);
+
+      res.json({ recommendations });
+    } else {
+      // If user has no favorite cuisine, recommend based on current restaurant's cuisine
+      const recommendations = await db.collection('restaurants')
+        .find({
+          ...recommendationQuery,
+          cuisine: currentCuisine
+        })
+        .sort({ rating: -1, name: 1 })
+        .limit(10)
+        .toArray();
+
+      res.json({ recommendations });
+    }
+
+  } catch (err) {
+    console.error("Error fetching recommendations:", err);
+    res.status(500).json({ error: "Error fetching recommendations" });
+  }
+});
+
 // --- USER PROFILE UPDATE ENDPOINTS ---
 
 // Update user's favorite restaurant
