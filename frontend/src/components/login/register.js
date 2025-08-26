@@ -8,11 +8,15 @@ import { useNavigate } from "react-router-dom";
 function Register() {
     const [Newusername, setNewusername] = useState("");
     const [Newpassword, setNewpassword] = useState("");
+    const [errorMessage, setErrorMessage] = useState("");
+    const [validationErrors, setValidationErrors] = useState({});
     const navigate = useNavigate();
     
     const handleRegister = async (event) => {
 
         event.preventDefault();
+        setErrorMessage("");
+        setValidationErrors({});
         
         if (!Newusername.trim() || !Newpassword.trim()) return;
 
@@ -30,17 +34,28 @@ function Register() {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log("Registration sucessful", data);
+                console.log("Registration successful", data);
                 alert("Registration successful! Please log in.");
                 navigate("/login")
             }
             else {
                 const errorData = await response.json();
-                alert("Registration failed: " + errorData.error);
+                
+                // Handle validation errors specifically
+                if (errorData.error === "Validation failed" && errorData.details) {
+                    const errors = {};
+                    errorData.details.forEach(detail => {
+                        errors[detail.path] = detail.msg;
+                    });
+                    setValidationErrors(errors);
+                    setErrorMessage("Please fix the validation errors below:");
+                } else {
+                    setErrorMessage(errorData.error || "Registration failed");
+                }
             }
         } catch (err) {
             console.error("Error during registration:", err);
-            alert("An error occurred during registration. Please try again later.");
+            setErrorMessage("An error occurred during registration. Please try again later.");
         }
 
     }
@@ -50,29 +65,52 @@ function Register() {
            <form onSubmit={handleRegister}>
             <div className="form-group">
                 <h1 className="header"> Registration </h1>
+                
+                {errorMessage && (
+                    <div className="alert alert-danger" role="alert">
+                        {errorMessage}
+                    </div>
+                )}
+                
                 <label htmlFor="exampleInputUsername"> 
                     Username </label>
                 <input 
                 type="text" 
-                className="form-control" 
+                className={`form-control ${validationErrors.username ? 'is-invalid' : ''}`}
                 id="exampleInputUsername" 
                 aria-describedby="UsernameHelp"
-                placeholder='Enter a new username'
+                placeholder='Enter a new username (letters, numbers, underscores only)'
                 value={Newusername}
                 onChange={(event) => setNewusername(event.target.value)}
                 />
+                {validationErrors.username && (
+                    <div className="invalid-feedback">
+                        {validationErrors.username}
+                    </div>
+                )}
+                <small className="form-text text-muted">
+                    Username must be 3-30 characters, letters, numbers, and underscores only
+                </small>
             </div>
             <div className="form-group">
                 <label htmlFor="exampleInputPassword1">
                     Password</label>
                 <input 
                 type="password" 
-                className="form-control" 
+                className={`form-control ${validationErrors.password ? 'is-invalid' : ''}`}
                 id="exampleInputPassword1" 
                 value={Newpassword}
-                placeholder='Enter a new password'
+                placeholder='Enter a new password (minimum 6 characters)'
                 onChange={(event) => setNewpassword(event.target.value)}
                 />
+                {validationErrors.password && (
+                    <div className="invalid-feedback">
+                        {validationErrors.password}
+                    </div>
+                )}
+                <small className="form-text text-muted">
+                    Password must be at least 6 characters long
+                </small>
             </div>
             <div className="form-group form-check">
                 <input 
