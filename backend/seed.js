@@ -292,6 +292,34 @@ async function runSeed() {
     await friends.deleteMany({});
     await friends.insertMany(friendsToSeed);
 
+    await db.collection('coupons').deleteMany({});
+    await db.collection('coupons').insertMany([
+  {
+    code: 'WELCOME10',
+    title: 'Welcome 10% Off',
+    description: 'New users get 10% off any restaurant.',
+    discountType: 'percent',
+    value: 10,
+    restaurant: null,     // global
+    active: true,
+    expiresAt: null,
+    usageLimit: 100,
+    usedBy: []
+  },
+  {
+    code: 'PIZZA5',
+    title: 'Pizza Planet $5 Off',
+    description: 'Save $5 at Pizza Planet.',
+    discountType: 'amount',
+    value: 5,
+    restaurant: 'Pizza Planet',
+    active: true,
+    expiresAt: new Date(Date.now() + 1000 * 60 * 60 * 24 * 14).toISOString(),
+    usageLimit: 100,
+    usedBy: []
+  }
+]);
+
     console.log("Successfully seeded the restaurants collection.");
     console.log("Successfully seeded the users collection.");
     console.log("Successfully seeded the reviews collection.");

@@ -24,7 +24,7 @@ function Navbar( { user } ) {
           <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton">
             <li> <Link to="/profile">Your Profile </Link></li>
             <li> <Link to="/friends">Friends </Link></li>
-            <li> <Link to="/about">Coupons </Link></li>
+            <li> <Link to="/coupons">Coupons </Link></li>
           </ul>
           </div> 
          ) : ( 

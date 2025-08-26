@@ -655,3 +655,73 @@ app.get('/user/:friend', async (req, res) => {
     res.status(500).json({ error: "Error fetching user profile" });
   }
 });
+
+// --- COUPONS ENDPOINTS ---
+const couponsCol = () => db.collection('coupons');
+
+// List coupons 
+app.get('/coupons', async (req, res) => {
+  try {
+    const { restaurant } = req.query;
+    const now = new Date();
+    const query = {
+      active: true,
+      $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gt: now.toISOString() } }]
+    };
+    if (restaurant) query.restaurant = restaurant;
+
+    const list = await couponsCol()
+      .find(query, { projection: { _id: 0 } })
+      .toArray();
+
+    res.json({ coupons: list });
+  } catch (err) {
+    console.error('Error listing coupons', err);
+    res.status(500).json({ error: 'Failed to list coupons' });
+  }
+});
+
+// Claim a coupon for a user
+// body: { username, code }
+app.post('/coupons/claim', async (req, res) => {
+  try {
+    const { username, code } = req.body || {};
+    if (!username || !code) return res.status(400).json({ error: 'username and code required' });
+
+    const coupon = await couponsCol().findOne({ code });
+    if (!coupon || coupon.active === false) return res.status(404).json({ error: 'Coupon not found or inactive' });
+
+    if (coupon.expiresAt && new Date(coupon.expiresAt) <= new Date()) {
+      return res.status(400).json({ error: 'Coupon expired' });
+    }
+
+    // prevent duplicate claim
+    if (Array.isArray(coupon.usedBy) && coupon.usedBy.includes(username)) {
+      return res.status(400).json({ error: 'Already claimed' });
+    }
+
+    await couponsCol().updateOne(
+      { code },
+      { $addToSet: { usedBy: username } }
+    );
+
+    res.json({ ok: true, coupon: { code: coupon.code, title: coupon.title } });
+  } catch (err) {
+    console.error('Error claiming coupon', err);
+    res.status(500).json({ error: 'Failed to claim coupon' });
+  }
+});
+
+// View a user's claimed coupons
+app.get('/users/:username/coupons', async (req, res) => {
+  try {
+    const { username } = req.params;
+    const list = await couponsCol()
+      .find({ usedBy: username }, { projection: { _id: 0 } })
+      .toArray();
+    res.json({ coupons: list });
+  } catch (err) {
+    console.error('Error fetching user coupons', err);
+    res.status(500).json({ error: 'Failed to fetch user coupons' });
+  }
+});
