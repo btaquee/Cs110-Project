@@ -49,17 +49,18 @@ return (
     {/* <Navbar/> */}
 
         <div className="Search">
-          <h1>Search Restaurants/Users (MongoDB)</h1>
+          <h2 className="search-heading" >Search Restaurants/Users</h2>
           <input
             type="text"
+            className="search-input"
             placeholder="Enter restaurant/user name..."
             value={searchQuery}
             onChange={(event) => setSearchQuery(event.target.value)}
           />
-          <button onClick={handleSearch}>Search</button>
+          <button  className="search-button" onClick={handleSearch}>Search</button>
           {searchResults.restaurants?.length > 0 && (
             <ul className="search-results">
-              <h2 className="heading"> Restaurant Search: </h2>
+              <h3 className="heading"> Restaurant Search: </h3>
               {searchResults.restaurants.map(restaurant => (
                 <div 
                   className="restaurant-list-item" 
@@ -74,7 +75,7 @@ return (
 
           {searchResults.users?.length > 0 && (
             <ul className="search-results">
-              <h2 className="heading"> User Search: </h2>
+              <h3 className="heading"> User Search: </h3>
               {searchResults.users.map(user => (
                 <div className="user-list-item"key={user._id}
                 onClick={() => navigate(`/profile/${user.username}`)}>
@@ -83,11 +84,12 @@ return (
                 </div>
               ))}
             </ul>
-          )}
+          )} 
         </div>
 
           {/* General listing of the restaurants: */}
           <div className="restaurant-list">
+            <h1>Restaurant List: </h1>
             {restaurants.length > 0 ? (
               <div className="restaurants-grid">
                 {restaurants.map(restaurant => (

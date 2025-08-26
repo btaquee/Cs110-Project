@@ -10,7 +10,7 @@ function Navbar( { user } ) {
             <Link to="/">
               <img className="logo" src="/images/Logo.png" alt="Logo"></img>
             </Link>
-             <Link to="/about">About</Link>
+             <div className="about"><Link to="/about">About</Link> </div>
           </div>
           {user ? (
           <div className="dropdown">
@@ -30,7 +30,7 @@ function Navbar( { user } ) {
          ) : ( 
             //When not logged in
             <Link to="/login">
-            <button type="button" class="btn btn-secondary" onClick={() => console.log("Go to login page")}> Login </button>
+            <button type="button" className="btn btn-secondary" onClick={() => console.log("Go to login page")}> Login </button>
             </Link>
            )} 
           

@@ -10,12 +10,9 @@ function About() {
           <div className="col-12 col-md-7">
             <h1 className="display-5 fw-bold mb-2">About Our App</h1>
             <p className="lead mb-3">
-              Discover places you’ll love, connect with friends, and get
-              smart recommendations tailored to your tastes.
+              DinePerks is a platform that is all about food discovery with social interaction. Discover new places to eat, share your experiences, and even get coupons for your favorite restaurants! 
             </p>
             <div className="d-flex gap-2 flex-wrap">
-              <a href="#mission" className="btn btn-primary">Our Mission</a>
-              <a href="#recs" className="btn btn-outline-primary">How Recommendations Work</a>
             </div>
           </div>
           <div className="col-12 col-md-5 text-center">
@@ -32,9 +29,12 @@ function About() {
       <section id="mission" className="mb-5">
         <h2 className="h3 fw-bold mb-3">Our Mission</h2>
         <p className="mb-0">
-          We help users quickly find the best options for them by combining
+          We wanted to combine reviews, rewards, and social networking through a single 
+          platform. We want it to be the place where users can save money while making 
+          connections with people from all around the world. 
+          {/* We help users quickly find the best options for them by combining
           clear search with a lightweight, explainable recommendation system.
-          You’ll also see socially relevant results through your friend network.
+          You’ll also see socially relevant results through your friend network. */}
         </p>
       </section>
 
@@ -45,10 +45,12 @@ function About() {
           <div className="col-12 col-md-6 col-lg-3">
             <div className="card h-100 shadow-sm">
               <div className="card-body">
-                <h3 className="h5 card-title">Smart Search</h3>
+                <h3 className="h5 card-title">Search Function</h3>
                 <p className="card-text">
-                  Type a query and get ranked results that consider title,
-                  description, categories, and popularity.
+                  Type a query and get results that can find restaurants
+                   and their cuisine types, as well as finding users and their favorite 
+                   places and cuisines.
+              
                 </p>
               </div>
             </div>
@@ -57,10 +59,9 @@ function About() {
           <div className="col-12 col-md-6 col-lg-3">
             <div className="card h-100 shadow-sm">
               <div className="card-body">
-                <h3 className="h5 card-title">Similar Items</h3>
+                <h3 className="h5 card-title">Recommendation List</h3>
                 <p className="card-text">
-                  When you view an item, see a curated list of similar options
-                  on the same page—just like Airbnb’s “Similar stays.”
+                  When you view a restuarant, you can see similar restuarants based on the clicked restuarant, your query, and your personal preferences. 
                 </p>
               </div>
             </div>
@@ -71,8 +72,7 @@ function About() {
               <div className="card-body">
                 <h3 className="h5 card-title">Friend List</h3>
                 <p className="card-text">
-                  Add friends, manage your list, and discover items your
-                  network likes or views more often.
+                  Add friends, manage your list, and view user profiles to see their favorite restaurants, cuisines and reviews (in development).
                 </p>
               </div>
             </div>
@@ -83,59 +83,37 @@ function About() {
               <div className="card-body">
                 <h3 className="h5 card-title">Easy Sign-In</h3>
                 <p className="card-text">
-                  Supports 3rd-party authentication (e.g., Google) so you can
-                  log in quickly and securely.
+                  Make a username and password for easy sign in. Supports 3rd-party authentication (e.g., Google) so you can
+                  log in quickly and securely (in development).
                 </p>
               </div>
             </div>
           </div>
+
+            <div className="col-12 col-md-6 col-lg-3">
+            <div className="card h-100 shadow-sm">
+              <div className="card-body">
+                <h3 className="h5 card-title">Coupon System</h3>
+                <p className="card-text">
+                  Get coupons for your favorite restaurants and cuisines. Save money while trying new places to eat! (In development) 
+                </p>
+              </div>
+            </div>
+          </div>
+
         </div>
       </section>
 
       {/* HOW IT WORKS */}
       <section className="mb-5">
         <h2 className="h3 fw-bold mb-3">How It Works</h2>
-        <ol className="about-steps">
-          <li><span className="fw-semibold">Search:</span> Enter keywords (e.g., “sushi”, “budget”).</li>
-          <li><span className="fw-semibold">Rank:</span> We score items using content and basic popularity.</li>
-          <li><span className="fw-semibold">Personalize:</span> Your favorites and friend activity boost relevant items.</li>
-          <li><span className="fw-semibold">Explore:</span> On an item page, browse “Similar items.”</li>
-        </ol>
-      </section>
-
-      {/* RECOMMENDATION SYSTEM EXPLAINER */}
-      <section id="recs" className="mb-5">
-        <h2 className="h3 fw-bold mb-3">Our Recommendation System</h2>
-        <p className="mb-3">
-          We use an explainable, lightweight approach that blends
-          content-based signals with small personalization boosts:
-        </p>
-
-        <div className="about-callout bg-body-tertiary border rounded-4 p-3 mb-3">
-          <p className="mb-1"><span className="fw-semibold">Search ranking (per result):</span></p>
-          <pre className="mb-0">
-{`score = 2 × (title contains query)
-      + 1 × (description contains query)
-      + 1 × (category/tag match)
-      + 1 × (popularity/recency boost)
-      + 1 × (matches your favorites)
-      + 1 × (liked/viewed by your friends)`}
-          </pre>
-        </div>
-
-        <div className="about-callout bg-body-tertiary border rounded-4 p-3">
-          <p className="mb-1"><span className="fw-semibold">“Similar items” (on item page):</span></p>
-          <pre className="mb-0">
-{`similarity = overlap in tags/categories
-break ties with popularity and recency
-limit to 3–6 items for clarity`}
-          </pre>
-        </div>
-
-        <p className="mt-3 mb-0">
-          This keeps recommendations transparent and fast to compute while still
-          feeling personalized.
-        </p>
+        <ul className="about-steps">
+          <li><span className="fw-semibold">LogIn/Registration:</span> Register with a new username and password or if you already have an account simply log in to get started. </li>
+          <li><span className="fw-semibold">Search:</span> Enter keywords (e.g., “sushi”, “bob”) to find restaunts that interest you and users with similar tastes. .</li>
+          <li><span className="fw-semibold">Reviewing:</span> Click on any restuarant to give a rating and write a review for other people to see!</li>
+          <li><span className="fw-semibold">Personalize:</span> Similar restaurants will be put based on your queries and personal preferences. </li>
+          <li><span className="fw-semibold">Coupons:</span> Share and recieve coupons from other users to save money on your favorite restuarants </li>
+        </ul>
       </section>
 
       {/* TEAM */}
@@ -146,9 +124,29 @@ limit to 3–6 items for clarity`}
           <div className="col-12 col-md-4">
             <div className="card h-100 team-card">
               <div className="card-body">
+                <h3 className="h5 mb-1">Cruz</h3>
+                <p className="text-body-secondary mb-2">• Foundation for Frontend/Backend <br/>• Search Function • MongoDB <br/> • Friends List • Login/Registration</p>
+                <p className="mb-0">Focus: Authentication, UX, Data Foundation, and System Architecture.</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="col-12 col-md-4">
+            <div className="card h-100 team-card">
+              <div className="card-body">
+                <h3 className="h5 mb-1">Burhanuddin</h3>
+                <p className="text-body-secondary mb-2">• Review Restuarant System <br/>• Recommendation System <br/> • Profile Updating </p>
+                <p className="mb-0">Focus: Content, UX, and Interaction, Personalization.</p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="col-12 col-md-4">
+            <div className="card h-100 team-card">
+              <div className="card-body">
                 <h3 className="h5 mb-1">Arun</h3>
-                <p className="text-body-secondary mb-2">About page • Recs • Friends • Auth</p>
-                <p className="mb-0">Focus: content, UX, and recommendation logic.</p>
+                <p className="text-body-secondary mb-2">• About page • Coupons <br/> • Friend Adding/Removing  </p>
+                <p className="mb-0">Focus: Content, UX, Coupon System, User Connectivity .</p>
               </div>
             </div>
           </div>
@@ -160,8 +158,8 @@ limit to 3–6 items for clarity`}
       <section className="mb-4">
         <h2 className="h3 fw-bold mb-3">Contact & Links</h2>
         <ul className="list-unstyled mb-0">
-          <li><span className="fw-semibold">Email:</span> your@email.com</li>
-          <li><span className="fw-semibold">Repository:</span> <a href="https://github.com/your-org/your-repo" target="_blank" rel="noreferrer">GitHub</a></li>
+          <li><span className="fw-semibold">Email:</span> some@email.com</li>
+          <li><span className="fw-semibold">Repository:</span> <a href="https://github.com/btaquee/Cs110-Project" target="_blank" rel="noreferrer">GitHub</a></li>
         </ul>
       </section>
     </main>
