@@ -353,10 +353,6 @@ function RestaurantDetail({ user }) {
                   <h3>{recommendedRestaurant.name}</h3>
                   <span className="cuisine-badge">{recommendedRestaurant.cuisine}</span>
                 </div>
-                <div className="recommendation-rating">
-                  <div className="stars">{renderStars(recommendedRestaurant.rating)}</div>
-                  <span className="rating-text">{recommendedRestaurant.rating} ⭐</span>
-                </div>
                 <p className="recommendation-description">{recommendedRestaurant.description}</p>
                 <div className="recommendation-address">
                   <span>📍 {recommendedRestaurant.address}</span>
