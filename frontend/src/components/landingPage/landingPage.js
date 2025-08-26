@@ -59,11 +59,15 @@ return (
           <button onClick={handleSearch}>Search</button>
           {searchResults.restaurants?.length > 0 && (
             <ul className="search-results">
-              <h2> Restaurants</h2>
+              <h2 className="heading"> Restaurant Search: </h2>
               {searchResults.restaurants.map(restaurant => (
-                <li key={restaurant._id}>
+                <div 
+                  className="restaurant-list-item" 
+                  key={restaurant._id}
+                  onClick={() => handleRestaurantClick(restaurant.id)}
+                >
                   {restaurant.name} , Cuisine: {restaurant.cuisine} , Rating: {restaurant.rating}
-                </li>
+                </div>
               ))}
             </ul>
           )}

@@ -16,10 +16,19 @@ function RestaurantDetail({ user }) {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [showEditForm, setShowEditForm] = useState(false);
   const [sortBy, setSortBy] = useState('newest'); // 'newest', 'oldest', 'highest', 'lowest'
+  const [recommendations, setRecommendations] = useState([]);
+  const [recommendationsLoading, setRecommendationsLoading] = useState(false);
 
   useEffect(() => {
     fetchRestaurantData();
   }, [restaurantId]);
+
+  // Separate useEffect for recommendations to ensure they load after main data
+  useEffect(() => {
+    if (restaurant && restaurantId) {
+      fetchRecommendations();
+    }
+  }, [restaurant, restaurantId, user]);
 
   const fetchRestaurantData = async () => {
     try {
@@ -47,6 +56,32 @@ function RestaurantDetail({ user }) {
     } catch (error) {
       console.error('Error fetching restaurant data:', error);
       setLoading(false);
+    }
+  };
+
+  const fetchRecommendations = async () => {
+    try {
+      setRecommendationsLoading(true);
+      console.log('Fetching recommendations for restaurant:', restaurantId);
+      
+      const userCuisine = user?.favCuisine || "";
+      console.log('User cuisine preference:', userCuisine);
+      
+      const response = await fetch(`http://localhost:3001/restaurants/recommendations/${restaurantId}?userCuisine=${encodeURIComponent(userCuisine)}`);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log('Recommendations received:', data);
+      
+      setRecommendations(data.recommendations || []);
+    } catch (error) {
+      console.error('Error fetching recommendations:', error);
+      setRecommendations([]);
+    } finally {
+      setRecommendationsLoading(false);
     }
   };
 
@@ -176,6 +211,10 @@ function RestaurantDetail({ user }) {
     return days[new Date().getDay()];
   };
 
+  const handleRecommendationClick = (recommendedRestaurant) => {
+    navigate(`/restaurant/${recommendedRestaurant.id}`);
+  };
+
   if (loading) {
     return <div className="loading">Loading...</div>;
   }
@@ -293,6 +332,43 @@ function RestaurantDetail({ user }) {
             <p className="no-reviews">No reviews yet. Be the first to review!</p>
           )}
         </div>
+      </div>
+
+      {/* Recommendations Section */}
+      <div className="recommendations-section">
+        <h2>You Might Also Like</h2>
+        {recommendationsLoading ? (
+          <div className="recommendations-loading">
+            <p>Loading recommendations...</p>
+          </div>
+        ) : recommendations.length > 0 ? (
+          <div className="recommendations-grid">
+            {recommendations.map((recommendedRestaurant) => (
+              <div 
+                key={recommendedRestaurant.id} 
+                className="recommendation-card"
+                onClick={() => handleRecommendationClick(recommendedRestaurant)}
+              >
+                <div className="recommendation-header">
+                  <h3>{recommendedRestaurant.name}</h3>
+                  <span className="cuisine-badge">{recommendedRestaurant.cuisine}</span>
+                </div>
+                <div className="recommendation-rating">
+                  <div className="stars">{renderStars(recommendedRestaurant.rating)}</div>
+                  <span className="rating-text">{recommendedRestaurant.rating} ⭐</span>
+                </div>
+                <p className="recommendation-description">{recommendedRestaurant.description}</p>
+                <div className="recommendation-address">
+                  <span>📍 {recommendedRestaurant.address}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="no-recommendations">
+            <p>No recommendations available at the moment.</p>
+          </div>
+        )}
       </div>
       
       {showReviewForm && (
