@@ -535,3 +535,42 @@ app.put('/user/update-cuisine', async (req, res) => {
     res.status(500).json({ error: "Error updating favorite cuisine" });
   }
 });
+
+//Gets friend list 
+app.get('/friends-list/:username', async (req, res) => {
+  try {
+    const username = req.params.username;
+
+    const friendsList = await db.collection("friends")
+      .find({ username }).toArray();
+
+    //Gets all spots where username is the username
+    const friends = friendsList.map(friend => friend.friendUserName);
+
+    res.json({
+      username,
+      friends
+    });
+  } catch (err) {
+    console.error("Error fetching friends list:", err);
+    res.status(500).json({ error: "Error fetching friends list" });
+  }
+});
+
+//Gets the profile info for a user
+app.get('/user/:friend', async (req, res) => {
+  try {
+    const friend = req.params.friend;
+
+    const userProfile = await db.collection("users").findOne({username: friend });
+
+    if (!userProfile) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.json(userProfile);
+  } catch (err) {
+    console.error("Error fetching user profile:", err);
+    res.status(500).json({ error: "Error fetching user profile" });
+  }
+});

@@ -30,7 +30,7 @@ function Navbar( { user } ) {
          ) : ( 
             //When not logged in
             <Link to="/login">
-            <button onClick={() => console.log("Go to login page")}> Login </button>
+            <button type="button" class="btn btn-secondary" onClick={() => console.log("Go to login page")}> Login </button>
             </Link>
            )} 
           

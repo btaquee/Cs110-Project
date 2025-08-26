@@ -236,6 +236,40 @@ const reviewsToSeed = [
   }
 ];
 
+const friendsToSeed = [
+    {
+    userId: 101, 
+    username: 'cruzl123',
+    friendUserName:'lopez123'
+    },
+
+    {
+    userId: 101, 
+    username: 'cruzl123',
+    friendUserName:'guy123'
+    },
+
+    {
+    userId: 101, 
+    username: 'cruzl123',
+    friendUserName:'admin123'
+    },
+
+    {
+    userId: 100, 
+    username: 'admin123',
+    friendUserName:'cruzl123'
+    },
+
+    {
+    userId: 102, 
+    username: 'lopez123',
+    friendUserName:'guy123'
+    }
+
+];
+
+
 async function runSeed() {
   try {
     await client.connect();
@@ -244,6 +278,7 @@ async function runSeed() {
     const restaurants = db.collection('restaurants');
     const users = db.collection('users');
     const reviews = db.collection('reviews');
+    const friends = db.collection('friends');
 
     await restaurants.deleteMany({});
     await restaurants.insertMany(restaurantsToSeed);
@@ -254,9 +289,13 @@ async function runSeed() {
     await reviews.deleteMany({});
     await reviews.insertMany(reviewsToSeed);
 
+    await friends.deleteMany({});
+    await friends.insertMany(friendsToSeed);
+
     console.log("Successfully seeded the restaurants collection.");
     console.log("Successfully seeded the users collection.");
     console.log("Successfully seeded the reviews collection.");
+    console.log("Successfully seeded the friends collection.");
 
   } catch (err) {
     console.log(err.stack);

@@ -70,11 +70,13 @@ return (
 
           {searchResults.users?.length > 0 && (
             <ul className="search-results">
-              <h2> Users </h2>
+              <h2 className="heading"> User Search: </h2>
               {searchResults.users.map(user => (
-                <li key={user._id}>
+                <div className="user-list-item"key={user._id}
+                onClick={() => navigate(`/profile/${user.username}`)}>
+                  
                   {user.username} , Favorite Restaurant: {user.favRestaurant} , Favorite Cuisine: {user.favCuisine}
-                </li>
+                </div>
               ))}
             </ul>
           )}
