@@ -1,4 +1,7 @@
 # dependencies
 node_modules/
 .env
-ratings.md
+*.md
+
+.DS_Store
+**/.DS_Store

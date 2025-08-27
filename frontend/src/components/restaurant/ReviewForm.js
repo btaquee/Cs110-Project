@@ -6,9 +6,13 @@ function ReviewForm({ restaurantId, restaurantName, username, onSubmit, onCancel
   const [comment, setComment] = useState('');
   const [hoveredRating, setHoveredRating] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
+  const [validationErrors, setValidationErrors] = useState({});
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setErrorMessage("");
+    setValidationErrors({});
     
     if (rating === 0) {
       alert('Please select a rating');
@@ -44,14 +48,23 @@ function ReviewForm({ restaurantId, restaurantName, username, onSubmit, onCancel
         setRating(0);
         setComment('');
       } else {
-        alert('Error submitting review: ' + data.error);
+        // Handle validation errors specifically
+        if (data.error === "Validation failed" && data.details) {
+          const errors = {};
+          data.details.forEach(detail => {
+            errors[detail.path] = detail.msg;
+          });
+          setValidationErrors(errors);
+          setErrorMessage("Please fix the validation errors below:");
+        } else {
+          setErrorMessage(data.error || "Error submitting review");
+        }
       }
-    } catch (error) {
-      console.error('Error submitting review:', error);
-      alert('Error submitting review. Please try again.');
-    } finally {
-      setIsSubmitting(false);
-    }
+          } catch (error) {
+        setErrorMessage('Error submitting review. Please try again.');
+      } finally {
+        setIsSubmitting(false);
+      }
   };
 
   const renderStars = (currentRating, hoverRating) => {
@@ -81,6 +94,12 @@ function ReviewForm({ restaurantId, restaurantName, username, onSubmit, onCancel
           <button className="close-button" onClick={onCancel}>×</button>
         </div>
         
+        {errorMessage && (
+          <div className="alert alert-danger" role="alert">
+            {errorMessage}
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="review-form">
           <div className="rating-section">
             <label>Your Rating:</label>
@@ -96,15 +115,21 @@ function ReviewForm({ restaurantId, restaurantName, username, onSubmit, onCancel
             <label htmlFor="comment">Your Review:</label>
             <textarea
               id="comment"
+              className={validationErrors.comment ? 'is-invalid' : ''}
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               placeholder="Share your experience with this restaurant..."
               rows="4"
-              maxLength="500"
+              maxLength="1000"
               required
             />
+            {validationErrors.comment && (
+              <div className="invalid-feedback">
+                {validationErrors.comment}
+              </div>
+            )}
             <span className="character-count">
-              {comment.length}/500 characters
+              {comment.length}/1000 characters
             </span>
           </div>
           

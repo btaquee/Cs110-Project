@@ -3,7 +3,7 @@ import './navbar.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
-function Navbar( { user } ) {
+function Navbar( { user, setUser } ) {
     return (
         <div className="navbar">
           <div id="left-side">
@@ -25,6 +25,8 @@ function Navbar( { user } ) {
             <li> <Link to="/profile">Your Profile </Link></li>
             <li> <Link to="/friends">Friends </Link></li>
             <li> <Link to="/about">Coupons </Link></li>
+            <li><hr className="dropdown-divider" /></li>
+            <li><button className="dropdown-item" onClick={() => setUser(null)}>Logout</button></li>
           </ul>
           </div> 
          ) : ( 

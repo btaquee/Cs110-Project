@@ -54,7 +54,6 @@ function RestaurantDetail({ user }) {
 
       setLoading(false);
     } catch (error) {
-      console.error('Error fetching restaurant data:', error);
       setLoading(false);
     }
   };
@@ -62,10 +61,8 @@ function RestaurantDetail({ user }) {
   const fetchRecommendations = async () => {
     try {
       setRecommendationsLoading(true);
-      console.log('Fetching recommendations for restaurant:', restaurantId);
       
       const userCuisine = user?.favCuisine || "";
-      console.log('User cuisine preference:', userCuisine);
       
       const response = await fetch(`http://localhost:3001/restaurants/recommendations/${restaurantId}?userCuisine=${encodeURIComponent(userCuisine)}`);
       
@@ -74,11 +71,9 @@ function RestaurantDetail({ user }) {
       }
       
       const data = await response.json();
-      console.log('Recommendations received:', data);
       
       setRecommendations(data.recommendations || []);
     } catch (error) {
-      console.error('Error fetching recommendations:', error);
       setRecommendations([]);
     } finally {
       setRecommendationsLoading(false);
@@ -186,7 +181,6 @@ function RestaurantDetail({ user }) {
         alert('Error deleting review');
       }
     } catch (error) {
-      console.error('Error deleting review:', error);
       alert('Error deleting review. Please try again.');
     }
   };
