@@ -61,7 +61,6 @@ function ReviewForm({ restaurantId, restaurantName, username, onSubmit, onCancel
         }
       }
           } catch (error) {
-        console.error('Error submitting review:', error);
         setErrorMessage('Error submitting review. Please try again.');
       } finally {
         setIsSubmitting(false);
