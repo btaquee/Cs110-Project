@@ -37,6 +37,7 @@ async function connectToDb() {
     await client.connect();
     console.log('Connected successfully to MongoDB');
     db = client.db(dbName); // Assign the database connection to our variable
+    await db.collection('users').createIndex({ username: 1 });
   } catch (err) {
     console.error('Failed to connect to MongoDB', err);
     process.exit(1); // Exit if we can't connect
@@ -851,3 +852,35 @@ app.delete('/friends/:username/:friend', async (req, res) => {
     res.status(500).json({ error: 'Failed to remove friend' });
   }
 });
+
+app.get('/users/search', async (req, res) => {
+  try {
+    const q = (req.query.q || '').trim();
+    const me = (req.query.me || '').trim(); // optional: current user
+    if (q.length < 2) return res.json({ users: [] });
+
+    // build filters
+    const filters = [{ username: { $regex: `^${q}`, $options: 'i' } }];
+    if (me) filters.push({ username: { $ne: me } });
+
+    // exclude existing friends if you want (optional)
+    if (me) {
+      const existing = await db.collection('friends').find({ username: me }).project({ friendUserName: 1, _id: 0 }).toArray();
+      const exclude = new Set(existing.map(r => r.friendUserName));
+      // you can post-filter, or use $nin with an array built from exclude
+    }
+
+    const users = await db.collection('users')
+      .find({ $and: filters })
+      .project({ _id: 0, username: 1 })
+      .limit(10)
+      .toArray();
+
+    res.json({ users: users.map(u => u.username) });
+  } catch (e) {
+    console.error('User search error:', e);
+    res.status(500).json({ error: 'Search failed' });
+  }
+});
+
+

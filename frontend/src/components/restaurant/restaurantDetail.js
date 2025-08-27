@@ -216,7 +216,7 @@ function RestaurantDetail({ user }) {
   };
 
   const handleRecommendationClick = (recommendedRestaurant) => {
-    navigate(`/restaurant/\${recommendedRestaurant.id}`);
+    navigate(`/restaurant/${recommendedRestaurant.id}`);
   };
 
   if (loading) {

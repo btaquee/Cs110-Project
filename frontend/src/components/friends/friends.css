@@ -19,3 +19,180 @@ padding: 20px;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0,0,0,0.15);
 }
+
+/* ========= Friend Search — Bootstrap Themed ========= */
+/* Uses Bootstrap variables so it matches your site/theme */
+
+.friend-search {
+  position: relative;
+  max-width: 520px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* Input wrapper styled like .form-control + focus ring */
+.friend-search__inputwrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  background: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  box-shadow: var(--bs-box-shadow-sm);
+  transition: box-shadow .15s ease, border-color .15s ease;
+}
+
+.friend-search__inputwrap:focus-within {
+  border-color: rgba(var(--bs-primary-rgb), .4);
+  box-shadow:
+    0 0 0 .25rem rgba(var(--bs-primary-rgb), .25); /* Bootstrap focus ring */
+}
+
+.friend-search__icon {
+  position: absolute;
+  left: .75rem;
+  width: 1rem;
+  height: 1rem;
+  opacity: .6;
+  color: var(--bs-secondary-color, #6c757d);
+  pointer-events: none;
+}
+
+/* Match .form-control sizing & typography */
+.friend-search__input {
+  width: 100%;
+  padding: .5rem .875rem .5rem 2.25rem; /* left space for icon */
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--bs-body-color);
+  font-size: 1rem;
+  line-height: 1.5;
+  border-radius: var(--bs-border-radius);
+}
+
+.friend-search__input::placeholder {
+  color: var(--bs-secondary-color, #6c757d);
+  opacity: .8;
+}
+
+/* Dropdown panel styled like a Bootstrap dropdown/menu/card */
+.friend-search__dropdown {
+  position: absolute;
+  top: calc(100% + .25rem);
+  left: 0;
+  right: 0;
+  background: var(--bs-body-bg);
+  border: 1px solid var(--bs-border-color);
+  border-radius: var(--bs-border-radius);
+  box-shadow: var(--bs-box-shadow-lg);
+  overflow: hidden;
+  transform-origin: top center;
+  opacity: 0;
+  transform: translateY(-4px);
+  pointer-events: none;
+  transition: opacity .12s ease, transform .12s ease;
+  z-index: 1050; /* near dropdowns/modals */
+}
+
+.friend-search__dropdown--open {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.friend-search__list {
+  max-height: 18rem; /* ~288px */
+  overflow: auto;
+  padding: .25rem;
+}
+
+/* Use spacing & hover feel similar to .dropdown-item / .list-group */
+.friend-search__item {
+  display: grid;
+  grid-template-columns: 2rem 1fr auto;
+  gap: .5rem;
+  align-items: center;
+  padding: .5rem .5rem;
+  margin: .125rem 0;
+  border-radius: var(--bs-border-radius);
+  cursor: pointer;
+  user-select: none;
+  transition: background-color .08s ease, transform .06s ease;
+}
+
+.friend-search__item:hover {
+  background-color: rgba(var(--bs-primary-rgb), .075); /* like .text-bg-primary soft */
+}
+
+.friend-search__item:active {
+  transform: translateY(1px);
+}
+
+/* Keyboard active outline in Bootstrap primary */
+.friend-search__item--active {
+  outline: 2px solid rgba(var(--bs-primary-rgb), .9);
+  outline-offset: 2px;
+  background-color: rgba(var(--bs-primary-rgb), .075);
+}
+
+/* Avatar pill */
+.friend-search__avatar {
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50rem;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: .875rem;
+  color: #fff;
+  background-image: linear-gradient(135deg,
+    color-mix(in oklab, var(--bs-primary), white 15%),
+    color-mix(in oklab, var(--bs-primary), black 10%)
+  );
+}
+
+/* Text styles aligned with Bootstrap color system */
+.friend-search__name {
+  color: var(--bs-body-color);
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.friend-search__meta {
+  font-size: .8125rem;
+  color: var(--bs-secondary-color, #6c757d);
+}
+
+/* “Add” pill mirrors .btn-outline-primary but stays lightweight */
+.friend-search__action {
+  font-size: .75rem;
+  padding: .25rem .5rem;
+  border-radius: 50rem;
+  border: 1px solid rgba(var(--bs-primary-rgb), .35);
+  color: var(--bs-primary);
+  background: transparent;
+}
+
+/* Empty state */
+.friend-search__state {
+  padding: .75rem;
+  text-align: center;
+  color: var(--bs-secondary-color, #6c757d);
+}
+
+/* Scrollbar subtlety */
+.friend-search__list::-webkit-scrollbar { width: .625rem; }
+.friend-search__list::-webkit-scrollbar-thumb {
+  border-radius: 1rem;
+  background: color-mix(in oklab, var(--bs-secondary-color, #6c757d) 50%, transparent);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+}
+
+/* Responsive tweaks */
+@media (max-width: 520px) {
+  .friend-search__item { grid-template-columns: 1.75rem 1fr auto; }
+  .friend-search__avatar { width: 1.75rem; height: 1.75rem; font-size: .75rem; }
+  .friend-search__name { font-size: .95rem; }
+}
