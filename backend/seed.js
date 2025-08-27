@@ -266,6 +266,11 @@ const friendsToSeed = [
     username: 'lopez123',
     friendUserName:'guy123'
     }
+    {
+        userId: 103, 
+        username: 'btaquee',
+        friendUserName:'cruzl123'
+        }
 
 ];
 
