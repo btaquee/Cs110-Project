@@ -666,10 +666,9 @@ app.get('/coupons', async (req, res) => {
     const now = new Date();
     const query = {
       active: true,
-      $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gt: now.toISOString() } }]
+      $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gt: now.toISOString() } }, { expiresAt: null }]
     };
     if (restaurant) query.restaurant = restaurant;
-
     const list = await couponsCol()
       .find(query, { projection: { _id: 0 } })
       .toArray();

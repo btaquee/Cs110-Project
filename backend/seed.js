@@ -300,7 +300,7 @@ async function runSeed() {
     description: 'New users get 10% off any restaurant.',
     discountType: 'percent',
     value: 10,
-    restaurant: null,     // global
+    restaurant: 'Any',     // global
     active: true,
     expiresAt: null,
     usageLimit: 100,
