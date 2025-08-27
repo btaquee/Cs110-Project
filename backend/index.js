@@ -808,3 +808,46 @@ app.post('/coupons/send', async (req, res) => {
     res.status(500).json({ error: 'Failed to send coupon' });
   }
 });
+
+// Add friend
+app.post('/friends/add', async (req, res) => {
+  try {
+    const { username, friend } = req.body || {};
+    if (!username || !friend) return res.status(400).json({ error: 'username and friend are required' });
+    if (username === friend) return res.status(400).json({ error: 'You cannot add yourself' });
+
+    const usersCol = db.collection('users');
+    const [u1, u2] = await Promise.all([
+      usersCol.findOne({ username }),
+      usersCol.findOne({ username: friend }),
+    ]);
+    if (!u1 || !u2) return res.status(404).json({ error: 'User not found' });
+
+    const friendsCol = db.collection('friends');
+    await friendsCol.createIndex({ username: 1, friendUserName: 1 }, { unique: true });
+
+    await friendsCol.updateOne(
+      { username, friendUserName: friend },
+      { $setOnInsert: { username, friendUserName: friend, userId: u1.uid } },
+      { upsert: true }
+    );
+
+    res.json({ ok: true });
+  } catch (e) {
+    if (e.code === 11000) return res.status(400).json({ error: 'Already friends' });
+    console.error('Add friend error:', e);
+    res.status(500).json({ error: 'Failed to add friend' });
+  }
+});
+
+// Remove friend
+app.delete('/friends/:username/:friend', async (req, res) => {
+  try {
+    const { username, friend } = req.params;
+    const r = await db.collection('friends').deleteOne({ username, friendUserName: friend });
+    res.json({ ok: true, removed: r.deletedCount });
+  } catch (e) {
+    console.error('Remove friend error:', e);
+    res.status(500).json({ error: 'Failed to remove friend' });
+  }
+});
