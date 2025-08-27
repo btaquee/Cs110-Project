@@ -1,10 +1,27 @@
 const express = require('express');
 const cors = require('cors');
+const helmet = require('helmet');
 const { MongoClient } = require('mongodb'); // Import the MongoClient
+const {
+  validateRegistration,
+  validateLogin,
+  validateSearch,
+  validateUserRetrieve,
+  validateReviewCreation,
+  validateReviewUpdate,
+  validateReviewDeletion,
+  validateRestaurantId,
+  validateUsername,
+  validateFriendUsername,
+  validateProfileUpdate
+} = require('./validation');
 
 const app = express();
+
+// Security middleware
+app.use(helmet());
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '10mb' })); // Limit request body size
 const port = 3001;
 
 // --- MongoDB Connection ---
@@ -34,7 +51,7 @@ connectToDb().then(() => {
 
 // ... (rest of your server code will go here)
 
-app.get('/search', async (req, res) => {
+app.get('/search', validateSearch, async (req, res) => {
   try {
     const term = req.query.query;
     
@@ -104,7 +121,7 @@ app.get('/restaurants', async (req, res) => {
     }
 });
 
-app.get('/user/retrieve', async (req, res) => {
+app.get('/user/retrieve', validateUserRetrieve, async (req, res) => {
     try {
       const username = req.query.username;
 
@@ -117,7 +134,7 @@ app.get('/user/retrieve', async (req, res) => {
     }
       });
 
-app.post('/user/login', async (req, res) =>{
+app.post('/user/login', validateLogin, async (req, res) =>{
   try {
     const { username, password } = req.body;
     
@@ -146,7 +163,7 @@ app.post('/user/login', async (req, res) =>{
     }
 });
 
-app.post('/user/register', async (req, res) => {
+app.post('/user/register', validateRegistration, async (req, res) => {
   try {
 
     const { username, password } = req.body;
@@ -187,7 +204,7 @@ app.post('/user/register', async (req, res) => {
 // --- REVIEWS ENDPOINTS ---
 
 // Get all reviews for a specific restaurant
-app.get('/reviews/restaurant/:restaurantId', async (req, res) => {
+app.get('/reviews/restaurant/:restaurantId', validateRestaurantId, async (req, res) => {
   try {
     const restaurantId = parseInt(req.params.restaurantId);
     
@@ -212,7 +229,7 @@ app.get('/reviews/restaurant/:restaurantId', async (req, res) => {
 });
 
 // Get a specific user's review for a restaurant (if they have one)
-app.get('/reviews/user/:username/restaurant/:restaurantId', async (req, res) => {
+app.get('/reviews/user/:username/restaurant/:restaurantId', validateUsername, validateRestaurantId, async (req, res) => {
   try {
     const { username, restaurantId } = req.params;
     const restaurantIdNum = parseInt(restaurantId);
@@ -231,7 +248,7 @@ app.get('/reviews/user/:username/restaurant/:restaurantId', async (req, res) => 
 });
 
 // Create a new review
-app.post('/reviews', async (req, res) => {
+app.post('/reviews', validateReviewCreation, async (req, res) => {
   try {
     const { restaurantId, restaurantName, username, rating, comment } = req.body;
 
@@ -294,7 +311,7 @@ app.post('/reviews', async (req, res) => {
 });
 
 // Update an existing review
-app.put('/reviews/:reviewId', async (req, res) => {
+app.put('/reviews/:reviewId', validateReviewUpdate, async (req, res) => {
   try {
     const { reviewId } = req.params;
     const { rating, comment } = req.body;
@@ -350,7 +367,7 @@ app.put('/reviews/:reviewId', async (req, res) => {
 });
 
 // Delete a review
-app.delete('/reviews/:reviewId', async (req, res) => {
+app.delete('/reviews/:reviewId', validateReviewDeletion, async (req, res) => {
   try {
     const { reviewId } = req.params;
 
@@ -439,7 +456,7 @@ app.put('/user/fix-typo', async (req, res) => {
 });
 
 // Get restaurant recommendations based on current restaurant and user preferences
-app.get('/restaurants/recommendations/:restaurantId', async (req, res) => {
+app.get('/restaurants/recommendations/:restaurantId', validateRestaurantId, async (req, res) => {
   try {
     const { restaurantId } = req.params;
     const { userCuisine } = req.query; // User's favorite cuisine from frontend
@@ -522,7 +539,7 @@ app.get('/restaurants/recommendations/:restaurantId', async (req, res) => {
 // --- USER PROFILE UPDATE ENDPOINTS ---
 
 // Update user's favorite restaurant
-app.put('/user/update-restaurant', async (req, res) => {
+app.put('/user/update-restaurant', validateProfileUpdate, async (req, res) => {
   try {
     const { username, favRestaurant } = req.body;
 
@@ -570,7 +587,7 @@ app.put('/user/update-restaurant', async (req, res) => {
 });
 
 // Update user's favorite cuisine
-app.put('/user/update-cuisine', async (req, res) => {
+app.put('/user/update-cuisine', validateProfileUpdate, async (req, res) => {
   try {
     const { username, favCuisine } = req.body;
 
@@ -618,7 +635,7 @@ app.put('/user/update-cuisine', async (req, res) => {
 });
 
 //Gets friend list 
-app.get('/friends-list/:username', async (req, res) => {
+app.get('/friends-list/:username', validateUsername, async (req, res) => {
   try {
     const username = req.params.username;
 
@@ -639,7 +656,7 @@ app.get('/friends-list/:username', async (req, res) => {
 });
 
 //Gets the profile info for a user
-app.get('/user/:friend', async (req, res) => {
+app.get('/user/:friend', validateFriendUsername, async (req, res) => {
   try {
     const friend = req.params.friend;
 

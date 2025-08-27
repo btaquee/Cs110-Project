@@ -19,7 +19,7 @@ function App() {
   return (
   <div>
   <Router>
-    <Navbar user={user}/>
+    <Navbar user={user} setUser={setUser}/>
     <Routes>
       <Route path="/" element={<LandingPage />} />
       <Route path="/login" element={<Login setUser={setUser} />} />

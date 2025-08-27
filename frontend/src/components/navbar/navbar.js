@@ -3,14 +3,14 @@ import './navbar.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
-function Navbar( { user } ) {
+function Navbar( { user, setUser } ) {
     return (
         <div className="navbar">
           <div id="left-side">
             <Link to="/">
               <img className="logo" src="/images/Logo.png" alt="Logo"></img>
             </Link>
-             <Link to="/about">About</Link>
+             <div className="about"><Link to="/about">About</Link> </div>
           </div>
           {user ? (
           <div className="dropdown">
@@ -25,12 +25,14 @@ function Navbar( { user } ) {
             <li> <Link to="/profile">Your Profile </Link></li>
             <li> <Link to="/friends">Friends </Link></li>
             <li> <Link to="/coupons">Coupons </Link></li>
+            <li><hr className="dropdown-divider" /></li>
+            <li><button className="dropdown-item" onClick={() => setUser(null)}>Logout</button></li>
           </ul>
           </div> 
          ) : ( 
             //When not logged in
             <Link to="/login">
-            <button type="button" class="btn btn-secondary" onClick={() => console.log("Go to login page")}> Login </button>
+            <button type="button" className="btn btn-secondary" onClick={() => console.log("Go to login page")}> Login </button>
             </Link>
            )} 
           

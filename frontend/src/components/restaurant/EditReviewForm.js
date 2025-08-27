@@ -42,7 +42,6 @@ function EditReviewForm({ review, onSubmit, onCancel }) {
         alert('Error updating review: ' + data.error);
       }
     } catch (error) {
-      console.error('Error updating review:', error);
       alert('Error updating review. Please try again.');
     } finally {
       setIsSubmitting(false);
