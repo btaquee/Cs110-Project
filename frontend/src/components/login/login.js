@@ -5,6 +5,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import { useNavigate } from "react-router-dom";
 import { Link } from "react-router-dom"
+import GoogleSignIn from './GoogleSignIn.js';
 
 function Login( {setUser} ) {
     const [username, setusername] = useState("");
@@ -77,6 +78,8 @@ function Login( {setUser} ) {
             </div>
             <button type="submit" className="btn btn-primary">Submit</button>
             </form>
+
+            <GoogleSignIn setUser={setUser} />
 
             <div className="register"> 
                 <p> Don't have an account? <Link to="/register"> Sign up here </Link> </p>
