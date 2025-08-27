@@ -2,5 +2,6 @@
 node_modules/
 .env
 *.md
-SECURITY.md
-SECURITY_TESTING_GUIDE.md
+
+.DS_Store
+**/.DS_Store
