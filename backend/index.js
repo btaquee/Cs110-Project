@@ -47,6 +47,10 @@ async function connectToDb() {
     console.log('Connected successfully to MongoDB');
     db = client.db(dbName); // Assign the database connection to our variable
     await db.collection('users').createIndex({ username: 1 });
+    await db.collection('coupons').createIndex({ code: 1 }, { unique: true });
+    await db.collection('coupons').createIndex({ private: 1, owner: 1 });
+    await db.collection('coupons').createIndex({ restaurant: 1, active: 1, sendable: 1 });
+    await db.collection('gifts').createIndex({ from: 1, to: 1, code: 1, sentAt: -1 });
   } catch (err) {
     console.error('Failed to connect to MongoDB', err);
     process.exit(1); // Exit if we can't connect
@@ -93,6 +97,12 @@ app.get('/search', validateSearch, async (req, res) => {
     res.status(500).json({ error: "Error during search" }); // ✅ return JSON
   }
 });
+
+function slugifyRestaurant(name) {
+  return String(name).replace(/\W+/g, '').toUpperCase();
+}
+
+
 
 app.get('/restaurants', async (req, res) => {
     try {
@@ -686,6 +696,7 @@ app.put('/user/update-restaurant', validateProfileUpdate, async (req, res) => {
       );
 
     if (result.modifiedCount > 0) {
+      await ensureFavoriteSendableCoupon(username, existingRestaurant.name);
       // Get the updated user
       const updatedUser = await db.collection('users')
         .findOne({ username: username });
@@ -819,15 +830,29 @@ const couponsCol = () => db.collection('coupons');
 // List coupons 
 app.get('/coupons', async (req, res) => {
   try {
-    const { restaurant } = req.query;
+    const me = (req.query.me || req.header('x-username') || '').trim();
+    if (!me) return res.status(400).json({ error: 'Provide me=<username> or x-username header' });
+
     const now = new Date();
-    const query = {
+    const q = {
       active: true,
-      $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gt: now.toISOString() } }, { expiresAt: null }]
+      sendable: true,
+      $and: [
+        { $or: [{ startsAt: null }, { startsAt: { $lte: now } }, { startsAt: { $exists: false } }] },
+        { $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }, { expiresAt: { $exists: false } }] }
+      ],
+      $or: [
+        // New model: per-user favorites (private + sendable) — only owner sees them
+        { private: true, owner: me },
+
+        // Transitional/legacy: if you still have any public favorites,
+        // show them only to people who actually hold them.
+        { private: { $ne: true }, usedBy: me }
+      ]
     };
-    if (restaurant) query.restaurant = restaurant;
-    const list = await couponsCol()
-      .find(query, { projection: { _id: 0 } })
+
+    const list = await db.collection('coupons')
+      .find(q, { projection: { _id: 0 } })
       .toArray();
 
     res.json({ coupons: list });
@@ -837,44 +862,49 @@ app.get('/coupons', async (req, res) => {
   }
 });
 
+
+
 // Claim a coupon for a user
-// body: { username, code }
+
 app.post('/coupons/claim', async (req, res) => {
   try {
     const { username, code } = req.body || {};
     if (!username || !code) return res.status(400).json({ error: 'username and code required' });
 
-    const coupon = await couponsCol().findOne({ code });
-    if (!coupon || coupon.active === false) return res.status(404).json({ error: 'Coupon not found or inactive' });
+    const c = await db.collection('coupons').findOne({ code });
+    if (!c || c.active === false) return res.status(404).json({ error: 'Coupon not found or inactive' });
 
-    if (coupon.expiresAt && new Date(coupon.expiresAt) <= new Date()) {
-      return res.status(400).json({ error: 'Coupon expired' });
+    if (c.private) {
+      if (c.owner !== username) return res.status(403).json({ error: 'This coupon is private to another user' });
+      return res.json({ ok: true, coupon: { code: c.code, title: c.title } });
     }
 
-    // prevent duplicate claim
-    if (Array.isArray(coupon.usedBy) && coupon.usedBy.includes(username)) {
-      return res.status(400).json({ error: 'Already claimed' });
-    }
-
-    await couponsCol().updateOne(
-      { code },
-      { $addToSet: { usedBy: username } }
-    );
-
-    res.json({ ok: true, coupon: { code: coupon.code, title: coupon.title } });
+    // Sendable/global path: no self-claim
+    return res.status(400).json({ error: 'Self-claim is disabled. Send this coupon to a friend instead.' });
   } catch (err) {
     console.error('Error claiming coupon', err);
     res.status(500).json({ error: 'Failed to claim coupon' });
   }
 });
 
-// View a user's claimed coupons
+
 app.get('/users/:username/coupons', async (req, res) => {
   try {
     const { username } = req.params;
-    const list = await couponsCol()
-      .find({ usedBy: username }, { projection: { _id: 0 } })
-      .toArray();
+
+    // Ensure private clones of the template coupons for this user
+    await ensurePrivateGlobalCoupons(username);
+
+    const list = await db.collection('coupons').find(
+      {
+        $or: [
+          { private: true, owner: username },                  // my private coupons (WELCOME10-<ME>, etc.)
+          { private: false, sendable: true, usedBy: username } // favorites I actually own
+        ]
+      },
+      { projection: { _id: 0 } }
+    ).toArray();
+
     res.json({ coupons: list });
   } catch (err) {
     console.error('Error fetching user coupons', err);
@@ -885,44 +915,78 @@ app.get('/users/:username/coupons', async (req, res) => {
 // === COUPONS: send (gift) to a friend ===
 app.post('/coupons/send', async (req, res) => {
   try {
-    const { fromUsername, toUsername, code } = req.body || {};
-    if (!fromUsername || !toUsername || !code) {
+    const { fromUsername, toUsername, code, message } = req.body || {};
+    if (!fromUsername || !toUsername || !code)
       return res.status(400).json({ error: 'fromUsername, toUsername, and code are required' });
-    }
-    if (fromUsername === toUsername) {
+    if (fromUsername === toUsername)
       return res.status(400).json({ error: 'Cannot send a coupon to yourself' });
-    }
 
-    // Confirm they are friends (one-way friendship is fine)
+
+    // must be friends
+
     const isFriend = await db.collection('friends').findOne({
-      username: fromUsername,
-      friendUserName: toUsername
+      username: fromUsername, friendUserName: toUsername
     });
-    if (!isFriend) {
-      return res.status(403).json({ error: 'Recipient is not in your friends list' });
-    }
+    if (!isFriend) return res.status(403).json({ error: 'Recipient is not in your friends list' });
 
     const now = new Date();
-    const coupon = await db.collection('coupons').findOne({
-      code,
-      active: true,
-      $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }, { expiresAt: { $exists: false } }]
-    });
-    if (!coupon) return res.status(404).json({ error: 'Coupon not found or inactive/expired' });
+    const coupon = await db.collection('coupons').findOne({ code, active: true });
+    if (!coupon) return res.status(404).json({ error: 'Coupon not found or inactive' });
 
-    // If already has it, block double-send
-    if (Array.isArray(coupon.usedBy) && coupon.usedBy.includes(toUsername)) {
+    // PRIVATE (owner-only) FAVORITE: allow only owner to send; recipient gets a private copy
+    if (coupon.private === true) {
+      if (coupon.owner !== fromUsername)
+        return res.status(403).json({ error: 'Only the owner can send this coupon' });
+
+      // Grant recipient a private, non-sendable copy (their entitlement)
+      const recipCode = `${coupon.code.replace(/-[A-Z0-9_]+$/, '')}-${toUsername.toUpperCase()}`;
+      await db.collection('coupons').updateOne(
+        { code: recipCode },
+        {
+          $setOnInsert: {
+            code: recipCode,
+            type: 'private',
+            private: true,
+            owner: toUsername,
+            sendable: true, // recipient can use, not send
+            title: coupon.title,
+            description: coupon.description,
+            discountType: coupon.discountType,
+            value: coupon.value,
+            restaurant: coupon.restaurant,
+            active: true,
+            startsAt: now,
+            expiresAt: coupon.expiresAt || null
+          }
+        },
+        { upsert: true }
+      );
+
+      await db.collection('gifts').insertOne({
+        from: fromUsername, to: toUsername, code: coupon.code,
+        message: (message || '').slice(0, 240), sentAt: now
+      });
+
+      return res.json({ ok: true, sentTo: toUsername, code });
+    }
+
+    // LEGACY PUBLIC FAVORITE (if any remain): allow send only if sender actually holds it
+    if (!Array.isArray(coupon.usedBy) || !coupon.usedBy.includes(fromUsername)) {
+      return res.status(403).json({ error: 'You do not own this coupon' });
+    }
+
+    // deliver by adding recipient into usedBy (legacy path)
+    if (coupon.usedBy.includes(toUsername))
       return res.status(400).json({ error: 'Friend already has this coupon' });
-    }
-    //enforce usageLimit
-    if (coupon.usageLimit && (coupon.usedBy?.length || 0) >= coupon.usageLimit) {
-      return res.status(400).json({ error: 'Coupon usage limit reached' });
-    }
 
     await db.collection('coupons').updateOne(
       { code },
       { $addToSet: { usedBy: toUsername } }
     );
+
+    await db.collection('gifts').insertOne({
+      from: fromUsername, to: toUsername, code, message: (message || '').slice(0, 240), sentAt: now
+    });
 
     res.json({ ok: true, sentTo: toUsername, code });
   } catch (err) {
@@ -930,6 +994,60 @@ app.post('/coupons/send', async (req, res) => {
     res.status(500).json({ error: 'Failed to send coupon' });
   }
 });
+
+
+async function ensureFavoriteSendableCoupon(username, restaurantName) {
+  const code = `FAV-${slugifyRestaurant(restaurantName)}-${String(username).toUpperCase()}`;
+
+  await db.collection('coupons').updateOne(
+    { code },
+    {
+      $setOnInsert: {
+        code,
+        type: 'favorite',
+        private: true,          // <— ONLY owner can see it
+        owner: username,        // <— owner
+        sendable: true,         // <— BUT owner can send it
+        title: `Favorite Perk: ${restaurantName}`,
+        description: `Thanks for choosing ${restaurantName}! Share this perk with friends.`,
+        discountType: 'percent',
+        value: 15,
+        restaurant: restaurantName,
+        active: true,
+        startsAt: new Date(),
+        expiresAt: null
+      }
+    },
+    { upsert: true }
+  );
+}
+
+app.get('/users/:username/gifts/sent', async (req, res) => {
+  try {
+    const rows = await db.collection('gifts')
+      .find({ from: req.params.username }, { projection: { _id: 0 } })
+      .sort({ sentAt: -1 })
+      .toArray();
+    res.json({ sent: rows });
+  } catch (e) {
+    console.error('gifts/sent error', e);
+    res.status(500).json({ error: 'Failed to fetch sent gifts' });
+  }
+});
+
+app.get('/users/:username/gifts/received', async (req, res) => {
+  try {
+    const rows = await db.collection('gifts')
+      .find({ to: req.params.username }, { projection: { _id: 0 } })
+      .sort({ sentAt: -1 })
+      .toArray();
+    res.json({ received: rows });
+  } catch (e) {
+    console.error('gifts/received error', e);
+    res.status(500).json({ error: 'Failed to fetch received gifts' });
+  }
+});
+
 
 // Add friend
 app.post('/friends/add', async (req, res) => {
@@ -1002,5 +1120,35 @@ app.get('/users/search', async (req, res) => {
     res.status(500).json({ error: 'Search failed' });
   }
 });
+
+async function ensurePrivateGlobalCoupons(username) {
+  const templates = await db.collection('coupons')
+    .find({ type: 'global_template', active: true })
+    .toArray();
+
+  for (const t of templates) {
+    const privateCode = `${t.code}-${String(username).toUpperCase()}`;
+    await db.collection('coupons').updateOne(
+      { code: privateCode },
+      {
+        $setOnInsert: {
+          code: privateCode,
+          type: 'private',
+          private: true,
+          owner: username,
+          title: t.title,
+          description: t.description,
+          discountType: t.discountType,   // 'percent' | 'amount'
+          value: t.value,
+          restaurant: t.restaurant ?? 'Any',
+          active: true,
+          startsAt: new Date(),
+          expiresAt: t.expiresAt || null
+        }
+      },
+      { upsert: true }
+    );
+  }
+}
 
 
