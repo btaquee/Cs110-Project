@@ -37,6 +37,7 @@ async function connectToDb() {
     await client.connect();
     console.log('Connected successfully to MongoDB');
     db = client.db(dbName); // Assign the database connection to our variable
+    await db.collection('users').createIndex({ username: 1 });
   } catch (err) {
     console.error('Failed to connect to MongoDB', err);
     process.exit(1); // Exit if we can't connect
@@ -672,3 +673,214 @@ app.get('/user/:friend', validateFriendUsername, async (req, res) => {
     res.status(500).json({ error: "Error fetching user profile" });
   }
 });
+
+// === FRIENDS: list my friends ===
+// GET /users/:username/friends  -> { friends: ["lopez123","guy123", ...] }
+app.get('/users/:username/friends', async (req, res) => {
+  try {
+    const { username } = req.params;
+    // Your seed shape: { userId, username, friendUserName }
+    const rows = await db.collection('friends')
+      .find({ username }, { projection: { _id: 0, friendUserName: 1 } })
+      .toArray();
+    const friends = rows.map(r => r.friendUserName);
+    res.json({ friends });
+  } catch (err) {
+    console.error('Error fetching friends:', err);
+    res.status(500).json({ error: 'Failed to fetch friends' });
+  }
+});
+
+
+// --- COUPONS ENDPOINTS ---
+const couponsCol = () => db.collection('coupons');
+
+// List coupons 
+app.get('/coupons', async (req, res) => {
+  try {
+    const { restaurant } = req.query;
+    const now = new Date();
+    const query = {
+      active: true,
+      $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gt: now.toISOString() } }, { expiresAt: null }]
+    };
+    if (restaurant) query.restaurant = restaurant;
+    const list = await couponsCol()
+      .find(query, { projection: { _id: 0 } })
+      .toArray();
+
+    res.json({ coupons: list });
+  } catch (err) {
+    console.error('Error listing coupons', err);
+    res.status(500).json({ error: 'Failed to list coupons' });
+  }
+});
+
+// Claim a coupon for a user
+// body: { username, code }
+app.post('/coupons/claim', async (req, res) => {
+  try {
+    const { username, code } = req.body || {};
+    if (!username || !code) return res.status(400).json({ error: 'username and code required' });
+
+    const coupon = await couponsCol().findOne({ code });
+    if (!coupon || coupon.active === false) return res.status(404).json({ error: 'Coupon not found or inactive' });
+
+    if (coupon.expiresAt && new Date(coupon.expiresAt) <= new Date()) {
+      return res.status(400).json({ error: 'Coupon expired' });
+    }
+
+    // prevent duplicate claim
+    if (Array.isArray(coupon.usedBy) && coupon.usedBy.includes(username)) {
+      return res.status(400).json({ error: 'Already claimed' });
+    }
+
+    await couponsCol().updateOne(
+      { code },
+      { $addToSet: { usedBy: username } }
+    );
+
+    res.json({ ok: true, coupon: { code: coupon.code, title: coupon.title } });
+  } catch (err) {
+    console.error('Error claiming coupon', err);
+    res.status(500).json({ error: 'Failed to claim coupon' });
+  }
+});
+
+// View a user's claimed coupons
+app.get('/users/:username/coupons', async (req, res) => {
+  try {
+    const { username } = req.params;
+    const list = await couponsCol()
+      .find({ usedBy: username }, { projection: { _id: 0 } })
+      .toArray();
+    res.json({ coupons: list });
+  } catch (err) {
+    console.error('Error fetching user coupons', err);
+    res.status(500).json({ error: 'Failed to fetch user coupons' });
+  }
+});
+
+// === COUPONS: send (gift) to a friend ===
+app.post('/coupons/send', async (req, res) => {
+  try {
+    const { fromUsername, toUsername, code } = req.body || {};
+    if (!fromUsername || !toUsername || !code) {
+      return res.status(400).json({ error: 'fromUsername, toUsername, and code are required' });
+    }
+    if (fromUsername === toUsername) {
+      return res.status(400).json({ error: 'Cannot send a coupon to yourself' });
+    }
+
+    // Confirm they are friends (one-way is OK; make this mutual if you want)
+    const isFriend = await db.collection('friends').findOne({
+      username: fromUsername,
+      friendUserName: toUsername
+    });
+    if (!isFriend) {
+      return res.status(403).json({ error: 'Recipient is not in your friends list' });
+    }
+
+    const now = new Date();
+    const coupon = await db.collection('coupons').findOne({
+      code,
+      active: true,
+      $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }, { expiresAt: { $exists: false } }]
+    });
+    if (!coupon) return res.status(404).json({ error: 'Coupon not found or inactive/expired' });
+
+    // If already has it, block double-send
+    if (Array.isArray(coupon.usedBy) && coupon.usedBy.includes(toUsername)) {
+      return res.status(400).json({ error: 'Friend already has this coupon' });
+    }
+    //enforce usageLimit
+    if (coupon.usageLimit && (coupon.usedBy?.length || 0) >= coupon.usageLimit) {
+      return res.status(400).json({ error: 'Coupon usage limit reached' });
+    }
+
+    await db.collection('coupons').updateOne(
+      { code },
+      { $addToSet: { usedBy: toUsername } }
+    );
+
+    res.json({ ok: true, sentTo: toUsername, code });
+  } catch (err) {
+    console.error('Error sending coupon:', err);
+    res.status(500).json({ error: 'Failed to send coupon' });
+  }
+});
+
+// Add friend
+app.post('/friends/add', async (req, res) => {
+  try {
+    const { username, friend } = req.body || {};
+    if (!username || !friend) return res.status(400).json({ error: 'username and friend are required' });
+    if (username === friend) return res.status(400).json({ error: 'You cannot add yourself' });
+
+    const usersCol = db.collection('users');
+    const [u1, u2] = await Promise.all([
+      usersCol.findOne({ username }),
+      usersCol.findOne({ username: friend }),
+    ]);
+    if (!u1 || !u2) return res.status(404).json({ error: 'User not found' });
+
+    const friendsCol = db.collection('friends');
+    await friendsCol.createIndex({ username: 1, friendUserName: 1 }, { unique: true });
+
+    await friendsCol.updateOne(
+      { username, friendUserName: friend },
+      { $setOnInsert: { username, friendUserName: friend, userId: u1.uid } },
+      { upsert: true }
+    );
+
+    res.json({ ok: true });
+  } catch (e) {
+    if (e.code === 11000) return res.status(400).json({ error: 'Already friends' });
+    console.error('Add friend error:', e);
+    res.status(500).json({ error: 'Failed to add friend' });
+  }
+});
+
+// Remove friend
+app.delete('/friends/:username/:friend', async (req, res) => {
+  try {
+    const { username, friend } = req.params;
+    const r = await db.collection('friends').deleteOne({ username, friendUserName: friend });
+    res.json({ ok: true, removed: r.deletedCount });
+  } catch (e) {
+    console.error('Remove friend error:', e);
+    res.status(500).json({ error: 'Failed to remove friend' });
+  }
+});
+
+app.get('/users/search', async (req, res) => {
+  try {
+    const q = (req.query.q || '').trim();
+    const me = (req.query.me || '').trim(); // optional: current user
+    if (q.length < 2) return res.json({ users: [] });
+
+    // build filters
+    const filters = [{ username: { $regex: `^${q}`, $options: 'i' } }];
+    if (me) filters.push({ username: { $ne: me } });
+
+    // exclude existing friends if you want (optional)
+    if (me) {
+      const existing = await db.collection('friends').find({ username: me }).project({ friendUserName: 1, _id: 0 }).toArray();
+      const exclude = new Set(existing.map(r => r.friendUserName));
+      // you can post-filter, or use $nin with an array built from exclude
+    }
+
+    const users = await db.collection('users')
+      .find({ $and: filters })
+      .project({ _id: 0, username: 1 })
+      .limit(10)
+      .toArray();
+
+    res.json({ users: users.map(u => u.username) });
+  } catch (e) {
+    console.error('User search error:', e);
+    res.status(500).json({ error: 'Search failed' });
+  }
+});
+
+

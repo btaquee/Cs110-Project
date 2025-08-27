@@ -10,6 +10,7 @@ function Profile({ user, setUser }) {
     const [availableRestaurants, setAvailableRestaurants] = useState([]);
     const [availableCuisines, setAvailableCuisines] = useState([]);
     const [loading, setLoading] = useState(false);
+    const [myCoupons, setMyCoupons] = useState([]);
 
     // Fetch available restaurants and cuisines when component loads
     useEffect(() => {
@@ -32,6 +33,18 @@ function Profile({ user, setUser }) {
 
         fetchOptions();
     }, []);
+
+    // Fetch user's claimed coupons
+    useEffect(() => {
+        if (user?.username) {
+            fetch(`http://localhost:3001/users/${encodeURIComponent(user.username)}/coupons`)
+                .then(res => res.json())
+                .then(data => setMyCoupons(Array.isArray(data.coupons) ? data.coupons : []))
+                .catch(err => console.error('Error fetching user coupons:', err));
+        } else {
+            setMyCoupons([]);
+        }
+    }, [user?.username]);
 
     const updateRestaurant = async () => {
         if (!newRestaurant.trim()) {
@@ -161,6 +174,22 @@ function Profile({ user, setUser }) {
                             <button onClick={updateCuisine}>Save</button>
                         </div>
                     )}
+
+                    {/* My Coupons Section */}
+                    {myCoupons.length > 0 && (
+                        <>
+                            <hr />
+                            <h2>My Coupons</h2>
+                            <ul>
+                                {myCoupons.map(c => (
+                                    <li key={c.code}>
+                                        <strong>{c.code}</strong> – {c.title || c.description || 'Coupon'}
+                                    </li>
+                                ))}
+                            </ul>
+                        </>
+                    )}
+
                 </div>
             ) : (
                 <p>How did you get here</p>

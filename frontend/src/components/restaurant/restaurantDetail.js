@@ -18,10 +18,20 @@ function RestaurantDetail({ user }) {
   const [sortBy, setSortBy] = useState('newest'); // 'newest', 'oldest', 'highest', 'lowest'
   const [recommendations, setRecommendations] = useState([]);
   const [recommendationsLoading, setRecommendationsLoading] = useState(false);
+  const [coupons, setCoupons] = useState([]);
 
   useEffect(() => {
     fetchRestaurantData();
   }, [restaurantId]);
+
+  useEffect(() => {
+  if (restaurant?.name) {
+    fetch(`http://localhost:3001/coupons?restaurant=${encodeURIComponent(restaurant.name)}`)
+      .then(res => res.json())
+      .then(data => setCoupons(data.coupons || []))
+      .catch(() => setCoupons([]));
+  }
+}, [restaurant?.name]);
 
   // Separate useEffect for recommendations to ensure they load after main data
   useEffect(() => {
@@ -257,7 +267,7 @@ function RestaurantDetail({ user }) {
           <h3>🕒 Hours</h3>
           <div className="hours-grid">
             {Object.entries(restaurant.hours).map(([day, hours]) => (
-              <div key={day} className={`hour-row ${day === getCurrentDay() ? 'current-day' : ''}`}>
+              <div key={day} className={`hour-row \${day === getCurrentDay() ? 'current-day' : ''}`}>
                 <span className="day">{day.charAt(0).toUpperCase() + day.slice(1)}</span>
                 <span className="hours">{hours}</span>
               </div>
@@ -265,6 +275,20 @@ function RestaurantDetail({ user }) {
           </div>
         </div>
       </div>
+
+      {/* Coupons Section */}
+      {coupons.length > 0 && (
+        <div className="info-section">
+          <h3>Available Coupons</h3>
+          <ul>
+            {coupons.map(c => (
+              <li key={c.code}>
+                <strong>{c.code}</strong> – {c.title}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="reviews-section">
         <div className="reviews-header">
