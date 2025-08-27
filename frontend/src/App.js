@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {BrowserRouter as Router, Routes, Route } from "react-router-dom"
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import './App.css';
 import LandingPage from './components/landingPage/landingPage.js'
 import Login from './components/login/login.js';
@@ -17,25 +18,27 @@ function App() {
   const [user, setUser] = useState(null);
 
   return (
-  <div>
-  <Router>
-    <Navbar user={user} setUser={setUser}/>
-    <Routes>
-      <Route path="/" element={<LandingPage />} />
-      <Route path="/login" element={<Login setUser={setUser} />} />
-      <Route path="/about" element={<About />} />
-      <Route path="/friends" element={<Friends  user={user} />} />
-      <Route path="/profile" element={<Profile user={user} setUser={setUser}/>} />
-      <Route path="/coupons" element={<Coupons user={user} />} />
-      <Route path="/register" element={<Register />} />
-      <Route path="/restaurant/:restaurantId" element={<RestaurantDetail user={user} />} />
-      <Route path="/profile/:friend" element={<OtherProfile user={user}/>} />
-      {/* <Route path="/navbar" element={<Navbar />} /> */}
+  <GoogleOAuthProvider clientId="832872323848-p4r34av1nbuosspa624t8um34d43hiud.apps.googleusercontent.com">
+    <div>
+    <Router>
+      <Navbar user={user} setUser={setUser}/>
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Login setUser={setUser} />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/friends" element={<Friends  user={user} />} />
+        <Route path="/profile" element={<Profile user={user} setUser={setUser}/>} />
+        <Route path="/coupons" element={<Coupons user={user} />} />
+        <Route path="/register" element={<Register />} />
+        <Route path="/restaurant/:restaurantId" element={<RestaurantDetail user={user} />} />
+        <Route path="/profile/:friend" element={<OtherProfile user={user}/>} />
+        {/* <Route path="/navbar" element={<Navbar />} /> */}
 
-    </Routes>
-  </Router>
+      </Routes>
+    </Router>
 
-  </div>
+    </div>
+  </GoogleOAuthProvider>
 
   
   );

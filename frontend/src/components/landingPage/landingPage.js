@@ -67,7 +67,7 @@ return (
                   key={restaurant._id}
                   onClick={() => handleRestaurantClick(restaurant.id)}
                 >
-                  {restaurant.name} , Cuisine: {restaurant.cuisine} , Rating: {restaurant.rating}
+                  {restaurant.name} , Cuisine: {restaurant.cuisine}
                 </div>
               ))}
             </ul>

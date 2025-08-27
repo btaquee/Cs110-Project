@@ -22,3 +22,59 @@
     width: 600px;
     border: solid 3px #ced4da;
 }
+
+/* Google Sign-In Styles */
+.google-signin-container {
+    margin-top: 20px;
+    width: 100%;
+    max-width: 600px;
+    text-align: center;
+}
+
+.divider {
+    position: relative;
+    margin: 20px 0;
+    text-align: center;
+}
+
+.divider::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: #ced4da;
+}
+
+.divider span {
+    background: white;
+    padding: 0 15px;
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.google-button-wrapper {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+}
+
+/* Ensure Google button fits properly */
+.google-button-wrapper > div {
+    width: 100% !important;
+    max-width: 400px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .form-control {
+        width: 90%;
+        max-width: 400px;
+    }
+    
+    .google-signin-container {
+        width: 90%;
+        max-width: 400px;
+    }
+}

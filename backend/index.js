@@ -2,6 +2,9 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const { MongoClient } = require('mongodb'); // Import the MongoClient
+const { OAuth2Client } = require('google-auth-library');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcryptjs');
 const {
   validateRegistration,
   validateLogin,
@@ -24,11 +27,17 @@ app.use(cors());
 app.use(express.json({ limit: '10mb' })); // Limit request body size
 const port = 3001;
 
+// JWT Secret - should be stored in environment variables in production
+const JWT_SECRET = 'dineperks-jwt-secret-key-2024';
+
+const GOOGLE_CLIENT_ID = '832872323848-p4r34av1nbuosspa624t8um34d43hiud.apps.googleusercontent.com';
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
+
 // --- MongoDB Connection ---
-// Replace with your MongoDB Atlas connection string
+
 const url = 'mongodb+srv://clope265:Passwordiscrazyngl%23092@dineperks-project.vepzatg.mongodb.net/?retryWrites=true&w=majority&appName=DinePerks-Project';
 const client = new MongoClient(url);
-const dbName = 'DinePerksDB'; // You can name your database anything
+const dbName = 'DinePerksDB';
 
 let db; // Variable to hold the database connection
 
@@ -50,7 +59,7 @@ connectToDb().then(() => {
   });
 });
 
-// ... (rest of your server code will go here)
+// Server endpoints
 
 app.get('/search', validateSearch, async (req, res) => {
   try {
@@ -146,22 +155,119 @@ app.post('/user/login', validateLogin, async (req, res) =>{
       return res.status(404).json({ error: "User not found"});
     }
 
-    if (user.password !== password) {
+    // Check if user has a hashed password (new users) or plain text (existing users)
+    let passwordValid = false;
+    if (user.password && user.password.startsWith('$2')) {
+      // Hashed password
+      passwordValid = await bcrypt.compare(password, user.password);
+    } else {
+      // Plain text password (legacy)
+      passwordValid = (user.password === password);
+    }
+
+    if (!passwordValid) {
       return res.status(401).json({error: "Password does not match "});
     }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: user._id, 
+        username: user.username,
+        email: user.email 
+      },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
     //Will return user info for profiling
     res.json({
       user: {
         username: user.username,
+        email: user.email,
+        picture: user.picture,
         favRestaurant: user.favRestaurant || "",
         favCuisine: user.favCuisine || ""
-      }
+      },
+      token: token
     });
 
   } catch (err) {
         console.error("Error checking username/password: ", err);
         res.status(500).json({error: "Error checking usernames/password"}); 
     }
+});
+
+// Google OAuth Authentication Endpoint
+app.post('/auth/google', async (req, res) => {
+  try {
+    const { credential } = req.body;
+
+    if (!credential) {
+      return res.status(400).json({ error: 'No credential provided' });
+    }
+
+    // Verify the Google token
+    const ticket = await googleClient.verifyIdToken({
+      idToken: credential,
+      audience: GOOGLE_CLIENT_ID
+    });
+
+    const payload = ticket.getPayload();
+    const { email, name, picture, sub: googleId } = payload;
+
+    // Check if user already exists
+    let user = await db.collection("users").findOne({ 
+      $or: [
+        { email: email },
+        { googleId: googleId }
+      ]
+    });
+
+    if (!user) {
+      // Create new user with Google info
+      const newUser = {
+        username: name || email.split('@')[0], // Use name or email prefix as username
+        email: email,
+        googleId: googleId,
+        picture: picture,
+        admin: false,
+        favRestaurant: "",
+        favCuisine: "",
+        authMethod: 'google',
+        dateCreated: new Date()
+      };
+
+      const result = await db.collection("users").insertOne(newUser);
+      user = { ...newUser, _id: result.insertedId };
+    }
+
+    // Generate JWT token
+    const token = jwt.sign(
+      { 
+        userId: user._id, 
+        username: user.username,
+        email: user.email 
+      },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
+
+    res.json({
+      user: {
+        username: user.username,
+        email: user.email,
+        picture: user.picture,
+        favRestaurant: user.favRestaurant || "",
+        favCuisine: user.favCuisine || ""
+      },
+      token: token
+    });
+
+  } catch (error) {
+    console.error('Google authentication error:', error);
+    res.status(500).json({ error: 'Google authentication failed' });
+  }
 });
 
 app.post('/user/register', validateRegistration, async (req, res) => {
@@ -175,16 +281,31 @@ app.post('/user/register', validateRegistration, async (req, res) => {
       return res.status(409).json({ error: "Username already exists"});
     }
 
+    // Hash the password
+    const hashedPassword = await bcrypt.hash(password, 12);
+
     const newAccount ={
       username: username,
-      password: password, 
+      password: hashedPassword, 
       admin: false, 
       favRestaurant: "",
-      favCuisine: "", 
+      favCuisine: "",
+      authMethod: 'local',
+      dateCreated: new Date()
     };
 
     //insert a new user into the database
     await db.collection("users").insertOne(newAccount);
+
+    // Generate JWT token for new user
+    const token = jwt.sign(
+      { 
+        userId: newAccount._id, 
+        username: newAccount.username
+      },
+      JWT_SECRET,
+      { expiresIn: '24h' }
+    );
 
     res.status(201).json({
       message: "Registration successful!",
@@ -192,8 +313,8 @@ app.post('/user/register', validateRegistration, async (req, res) => {
         username: newAccount.username,
         favRestaurant: newAccount.favRestaurant,
         favCuisine: newAccount.favCuisine
-      }
-
+      },
+      token: token
     })
 
   } catch (err) {
@@ -679,7 +800,7 @@ app.get('/user/:friend', validateFriendUsername, async (req, res) => {
 app.get('/users/:username/friends', async (req, res) => {
   try {
     const { username } = req.params;
-    // Your seed shape: { userId, username, friendUserName }
+    // Seed data structure: { userId, username, friendUserName }
     const rows = await db.collection('friends')
       .find({ username }, { projection: { _id: 0, friendUserName: 1 } })
       .toArray();
@@ -772,7 +893,7 @@ app.post('/coupons/send', async (req, res) => {
       return res.status(400).json({ error: 'Cannot send a coupon to yourself' });
     }
 
-    // Confirm they are friends (one-way is OK; make this mutual if you want)
+    // Confirm they are friends (one-way friendship is fine)
     const isFriend = await db.collection('friends').findOne({
       username: fromUsername,
       friendUserName: toUsername
@@ -863,11 +984,10 @@ app.get('/users/search', async (req, res) => {
     const filters = [{ username: { $regex: `^${q}`, $options: 'i' } }];
     if (me) filters.push({ username: { $ne: me } });
 
-    // exclude existing friends if you want (optional)
+    // exclude existing friends
     if (me) {
       const existing = await db.collection('friends').find({ username: me }).project({ friendUserName: 1, _id: 0 }).toArray();
       const exclude = new Set(existing.map(r => r.friendUserName));
-      // you can post-filter, or use $nin with an array built from exclude
     }
 
     const users = await db.collection('users')

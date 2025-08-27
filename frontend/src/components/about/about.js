@@ -72,7 +72,7 @@ function About() {
               <div className="card-body">
                 <h3 className="h5 card-title">Friend List</h3>
                 <p className="card-text">
-                  Add friends, manage your list, and view user profiles to see their favorite restaurants, cuisines and reviews (in development).
+                  Add friends, manage your list, and view user profiles to see their favorite restaurants, cuisines and reviews.
                 </p>
               </div>
             </div>
@@ -84,7 +84,7 @@ function About() {
                 <h3 className="h5 card-title">Easy Sign-In</h3>
                 <p className="card-text">
                   Make a username and password for easy sign in. Supports 3rd-party authentication (e.g., Google) so you can
-                  log in quickly and securely (in development).
+                  log in quickly and securely.
                 </p>
               </div>
             </div>
@@ -95,7 +95,7 @@ function About() {
               <div className="card-body">
                 <h3 className="h5 card-title">Coupon System</h3>
                 <p className="card-text">
-                  Get coupons for your favorite restaurants and cuisines. Save money while trying new places to eat! (In development) 
+                  Get coupons for your favorite restaurants and cuisines. Save money while trying new places to eat! 
                 </p>
               </div>
             </div>
@@ -120,7 +120,7 @@ function About() {
       <section className="mb-5">
         <h2 className="h3 fw-bold mb-3">Team</h2>
         <div className="row g-3">
-          {/* Replace placeholder names/roles as needed */}
+          {/* Team member information */}
           <div className="col-12 col-md-4">
             <div className="card h-100 team-card">
               <div className="card-body">
