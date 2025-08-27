@@ -2,3 +2,5 @@
 node_modules/
 .env
 *.md
+SECURITY.md
+SECURITY_TESTING_GUIDE.md
