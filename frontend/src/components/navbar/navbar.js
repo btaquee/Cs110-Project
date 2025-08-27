@@ -24,7 +24,7 @@ function Navbar( { user, setUser } ) {
           <ul className="dropdown-menu" aria-labelledby="dropdownMenuButton">
             <li> <Link to="/profile">Your Profile </Link></li>
             <li> <Link to="/friends">Friends </Link></li>
-            <li> <Link to="/about">Coupons </Link></li>
+            <li> <Link to="/coupons">Coupons </Link></li>
             <li><hr className="dropdown-divider" /></li>
             <li><button className="dropdown-item" onClick={() => setUser(null)}>Logout</button></li>
           </ul>

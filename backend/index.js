@@ -672,3 +672,139 @@ app.get('/user/:friend', validateFriendUsername, async (req, res) => {
     res.status(500).json({ error: "Error fetching user profile" });
   }
 });
+
+// === FRIENDS: list my friends ===
+// GET /users/:username/friends  -> { friends: ["lopez123","guy123", ...] }
+app.get('/users/:username/friends', async (req, res) => {
+  try {
+    const { username } = req.params;
+    // Your seed shape: { userId, username, friendUserName }
+    const rows = await db.collection('friends')
+      .find({ username }, { projection: { _id: 0, friendUserName: 1 } })
+      .toArray();
+    const friends = rows.map(r => r.friendUserName);
+    res.json({ friends });
+  } catch (err) {
+    console.error('Error fetching friends:', err);
+    res.status(500).json({ error: 'Failed to fetch friends' });
+  }
+});
+
+
+// --- COUPONS ENDPOINTS ---
+const couponsCol = () => db.collection('coupons');
+
+// List coupons 
+app.get('/coupons', async (req, res) => {
+  try {
+    const { restaurant } = req.query;
+    const now = new Date();
+    const query = {
+      active: true,
+      $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gt: now.toISOString() } }, { expiresAt: null }]
+    };
+    if (restaurant) query.restaurant = restaurant;
+    const list = await couponsCol()
+      .find(query, { projection: { _id: 0 } })
+      .toArray();
+
+    res.json({ coupons: list });
+  } catch (err) {
+    console.error('Error listing coupons', err);
+    res.status(500).json({ error: 'Failed to list coupons' });
+  }
+});
+
+// Claim a coupon for a user
+// body: { username, code }
+app.post('/coupons/claim', async (req, res) => {
+  try {
+    const { username, code } = req.body || {};
+    if (!username || !code) return res.status(400).json({ error: 'username and code required' });
+
+    const coupon = await couponsCol().findOne({ code });
+    if (!coupon || coupon.active === false) return res.status(404).json({ error: 'Coupon not found or inactive' });
+
+    if (coupon.expiresAt && new Date(coupon.expiresAt) <= new Date()) {
+      return res.status(400).json({ error: 'Coupon expired' });
+    }
+
+    // prevent duplicate claim
+    if (Array.isArray(coupon.usedBy) && coupon.usedBy.includes(username)) {
+      return res.status(400).json({ error: 'Already claimed' });
+    }
+
+    await couponsCol().updateOne(
+      { code },
+      { $addToSet: { usedBy: username } }
+    );
+
+    res.json({ ok: true, coupon: { code: coupon.code, title: coupon.title } });
+  } catch (err) {
+    console.error('Error claiming coupon', err);
+    res.status(500).json({ error: 'Failed to claim coupon' });
+  }
+});
+
+// View a user's claimed coupons
+app.get('/users/:username/coupons', async (req, res) => {
+  try {
+    const { username } = req.params;
+    const list = await couponsCol()
+      .find({ usedBy: username }, { projection: { _id: 0 } })
+      .toArray();
+    res.json({ coupons: list });
+  } catch (err) {
+    console.error('Error fetching user coupons', err);
+    res.status(500).json({ error: 'Failed to fetch user coupons' });
+  }
+});
+
+// === COUPONS: send (gift) to a friend ===
+app.post('/coupons/send', async (req, res) => {
+  try {
+    const { fromUsername, toUsername, code } = req.body || {};
+    if (!fromUsername || !toUsername || !code) {
+      return res.status(400).json({ error: 'fromUsername, toUsername, and code are required' });
+    }
+    if (fromUsername === toUsername) {
+      return res.status(400).json({ error: 'Cannot send a coupon to yourself' });
+    }
+
+    // Confirm they are friends (one-way is OK; make this mutual if you want)
+    const isFriend = await db.collection('friends').findOne({
+      username: fromUsername,
+      friendUserName: toUsername
+    });
+    if (!isFriend) {
+      return res.status(403).json({ error: 'Recipient is not in your friends list' });
+    }
+
+    const now = new Date();
+    const coupon = await db.collection('coupons').findOne({
+      code,
+      active: true,
+      $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }, { expiresAt: { $exists: false } }]
+    });
+    if (!coupon) return res.status(404).json({ error: 'Coupon not found or inactive/expired' });
+
+    // If already has it, block double-send
+    if (Array.isArray(coupon.usedBy) && coupon.usedBy.includes(toUsername)) {
+      return res.status(400).json({ error: 'Friend already has this coupon' });
+    }
+    //enforce usageLimit
+    if (coupon.usageLimit && (coupon.usedBy?.length || 0) >= coupon.usageLimit) {
+      return res.status(400).json({ error: 'Coupon usage limit reached' });
+    }
+
+    await db.collection('coupons').updateOne(
+      { code },
+      { $addToSet: { usedBy: toUsername } }
+    );
+
+    res.json({ ok: true, sentTo: toUsername, code });
+  } catch (err) {
+    console.error('Error sending coupon:', err);
+    res.status(500).json({ error: 'Failed to send coupon' });
+  }
+});
