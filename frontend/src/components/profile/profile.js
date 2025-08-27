@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import './profile.css';
+import GiftHistory from '../coupons/GiftHistory';
+
 
 function Profile({ user, setUser }) {
     const [showRestaurantForm, setShowRestaurantForm] = useState(false);
@@ -36,15 +38,12 @@ function Profile({ user, setUser }) {
 
     // Fetch user's claimed coupons
     useEffect(() => {
-        if (user?.username) {
-            fetch(`http://localhost:3001/users/${encodeURIComponent(user.username)}/coupons`)
-                .then(res => res.json())
-                .then(data => setMyCoupons(Array.isArray(data.coupons) ? data.coupons : []))
-                .catch(err => console.error('Error fetching user coupons:', err));
-        } else {
-            setMyCoupons([]);
-        }
-    }, [user?.username]);
+        if (!user?.username) { setMyCoupons([]); return; }
+        fetch(`http://localhost:3001/users/${encodeURIComponent(user.username)}/coupons`)
+            .then(res => res.json())
+            .then(data => setMyCoupons(Array.isArray(data.coupons) ? data.coupons : []))
+            .catch(err => console.error('Error fetching user coupons:', err));
+        }, [user?.username]);
 
     const updateRestaurant = async () => {
         if (!newRestaurant.trim()) {
@@ -68,6 +67,10 @@ function Profile({ user, setUser }) {
 
             if (response.ok) {
                 setUser(data.user);
+                fetch(`http://localhost:3001/users/${encodeURIComponent(user.username)}/coupons`)
+                    .then(res => res.json())
+                    .then(data => setMyCoupons(Array.isArray(data.coupons) ? data.coupons : []))
+                    .catch(err => console.error('Error fetching user coupons:', err));
                 setMessage('Restaurant updated successfully!');
                 setShowRestaurantForm(false);
                 setNewRestaurant('');
@@ -189,6 +192,8 @@ function Profile({ user, setUser }) {
                             </ul>
                         </>
                     )}
+                    {user?.username && <GiftHistory username={user.username} />}
+
 
                 </div>
             ) : (

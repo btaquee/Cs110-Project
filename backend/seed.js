@@ -280,6 +280,10 @@ async function runSeed() {
     const reviews = db.collection('reviews');
     const friends = db.collection('friends');
 
+    await db.collection('coupons').deleteMany({});
+    await db.collection('gifts').deleteMany({});
+
+
     await restaurants.deleteMany({});
     await restaurants.insertMany(restaurantsToSeed);
    
@@ -296,6 +300,7 @@ async function runSeed() {
     await db.collection('coupons').insertMany([
   {
     code: 'WELCOME10',
+    type: 'global_template', 
     title: 'Welcome 10% Off',
     description: 'New users get 10% off any restaurant.',
     discountType: 'percent',
@@ -308,6 +313,7 @@ async function runSeed() {
   },
   {
     code: 'PIZZA5',
+    type: 'global_template',
     title: 'Pizza Planet $5 Off',
     description: 'Save $5 at Pizza Planet.',
     discountType: 'amount',
