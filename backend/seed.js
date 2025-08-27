@@ -170,7 +170,7 @@ const restaurantsToSeed = [
     },
     { 
         id: 10, 
-        name: 'Johns Pizza', 
+        name: 'Johns BBQ', 
         cuisine: 'American', 
         rating: 3,
         address: '741 Polk Street, San Francisco, CA 94109',
