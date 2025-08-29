@@ -5,6 +5,7 @@ const { MongoClient } = require('mongodb'); // Import the MongoClient
 const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const cookieParser = require('cookie-parser');
 const {
   validateRegistration,
   validateLogin,
@@ -24,8 +25,20 @@ const app = express();
 // Security middleware
 app.use(helmet());
 app.use(cors());
+app.use(cookieParser());
 app.use(express.json({ limit: '10mb' })); // Limit request body size
 const port = 3001;
+
+app.get('/', (req, res) => {
+    let visitCount = parseInt(req.cookies.visitCount) || 0;
+    visitCount++;
+
+    // Set the cookie in the user's browser
+    res.cookie('visitCount', visitCount.toString(), { maxAge: 900000, httpOnly: true });
+
+    res.send(`Welcome! You have visited this page ${visitCount} times.`);
+});
+
 
 // JWT Secret - should be stored in environment variables in production
 const JWT_SECRET = 'dineperks-jwt-secret-key-2024';
@@ -64,6 +77,8 @@ connectToDb().then(() => {
 });
 
 // Server endpoints
+
+
 
 app.get('/search', validateSearch, async (req, res) => {
   try {
@@ -842,11 +857,10 @@ app.get('/coupons', async (req, res) => {
         { $or: [{ expiresAt: null }, { expiresAt: { $gt: now } }, { expiresAt: { $exists: false } }] }
       ],
       $or: [
-        // New model: per-user favorites (private + sendable) — only owner sees them
+        
         { private: true, owner: me },
 
-        // Transitional/legacy: if you still have any public favorites,
-        // show them only to people who actually hold them.
+        
         { private: { $ne: true }, usedBy: me }
       ]
     };
@@ -933,12 +947,12 @@ app.post('/coupons/send', async (req, res) => {
     const coupon = await db.collection('coupons').findOne({ code, active: true });
     if (!coupon) return res.status(404).json({ error: 'Coupon not found or inactive' });
 
-    // PRIVATE (owner-only) FAVORITE: allow only owner to send; recipient gets a private copy
+    //allow only owner to send; recipient gets a private copy
     if (coupon.private === true) {
       if (coupon.owner !== fromUsername)
         return res.status(403).json({ error: 'Only the owner can send this coupon' });
 
-      // Grant recipient a private, non-sendable copy (their entitlement)
+      // Grant recipient a private, non-sendable copy
       const recipCode = `${coupon.code.replace(/-[A-Z0-9_]+$/, '')}-${toUsername.toUpperCase()}`;
       await db.collection('coupons').updateOne(
         { code: recipCode },
@@ -970,7 +984,7 @@ app.post('/coupons/send', async (req, res) => {
       return res.json({ ok: true, sentTo: toUsername, code });
     }
 
-    // LEGACY PUBLIC FAVORITE (if any remain): allow send only if sender actually holds it
+    //allow send only if sender actually holds it
     if (!Array.isArray(coupon.usedBy) || !coupon.usedBy.includes(fromUsername)) {
       return res.status(403).json({ error: 'You do not own this coupon' });
     }

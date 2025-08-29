@@ -8,7 +8,7 @@ function Coupons({ user }) {
   const [selectedFriend, setSelectedFriend] = useState({}); // code -> friend username
   const [sentTo, setSentTo] = useState({});                 // code -> friend just sent
 
-  // Load personalized catalog (owner-visible sendable items)
+
   useEffect(() => {
     fetch(`http://localhost:3001/coupons?me=${encodeURIComponent(user?.username || '')}`)
       .then(res => res.json())
@@ -17,7 +17,7 @@ function Coupons({ user }) {
     // re-run when user changes to refetch personalized catalog
   }, [user?.username]);
 
-  // Load MY coupons (to surface private clones like WELCOME10-<ME>)
+  // Load MY coupons (including private ones)
   useEffect(() => {
     if (!user?.username) { setMyCoupons([]); return; }
     fetch(`http://localhost:3001/users/${encodeURIComponent(user.username)}/coupons`)
@@ -26,7 +26,7 @@ function Coupons({ user }) {
       .catch(() => setMyCoupons([]));
   }, [user?.username]);
 
-  // Load my friends for sending (FIX: correct endpoint)
+  // Load my friends for sending 
   useEffect(() => {
     if (!user?.username) { setFriends([]); return; }
     fetch(`http://localhost:3001/friends-list/${encodeURIComponent(user.username)}`)
