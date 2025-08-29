@@ -1,5 +1,5 @@
 import './about.css';
-// import Navbar from '../navbar/navbar.js';
+
 
 function About() {
   return (
@@ -32,9 +32,6 @@ function About() {
           We wanted to combine reviews, rewards, and social networking through a single 
           platform. We want it to be the place where users can save money while making 
           connections with people from all around the world. 
-          {/* We help users quickly find the best options for them by combining
-          clear search with a lightweight, explainable recommendation system.
-          You’ll also see socially relevant results through your friend network. */}
         </p>
       </section>
 
@@ -135,8 +132,8 @@ function About() {
             <div className="card h-100 team-card">
               <div className="card-body">
                 <h3 className="h5 mb-1">Burhanuddin</h3>
-                <p className="text-body-secondary mb-2">• Review Restuarant System <br/>• Recommendation System <br/> • Profile Updating </p>
-                <p className="mb-0">Focus: Content, UX, and Interaction, Personalization.</p>
+                <p className="text-body-secondary mb-2">• Review Restuarant System <br/>• Recommendation System <br/> • Profile Updating  <br/> • Login/Registration Security </p>
+                <p className="mb-0">Focus: Content, UX, and Interaction, Personalization, Security .</p>
               </div>
             </div>
           </div>
@@ -145,12 +142,11 @@ function About() {
             <div className="card h-100 team-card">
               <div className="card-body">
                 <h3 className="h5 mb-1">Arun</h3>
-                <p className="text-body-secondary mb-2">• About page • Coupons <br/> • Friend Adding/Removing  </p>
+                <p className="text-body-secondary mb-2">• About page • Coupons <br/> • Friend Adding/Removing <br/> • Cookies  </p>
                 <p className="mb-0">Focus: Content, UX, Coupon System, User Connectivity .</p>
               </div>
             </div>
           </div>
-          {/* Add more teammates here */}
         </div>
       </section>
 

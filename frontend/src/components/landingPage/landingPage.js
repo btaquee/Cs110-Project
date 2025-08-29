@@ -1,12 +1,8 @@
-// import Navbar from '../navbar/navbar.js';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import './landing-home.css'
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
-
-
-
 
 function LandingPage() {
     const navigate = useNavigate();
@@ -40,14 +36,10 @@ useEffect(() => {
 const handleRestaurantClick = (restaurantId) => {
   navigate(`/restaurant/${restaurantId}`);
 };
-
-// const user = { username: "CoolGuy123" };    
+   
 
 return (
     <div className="land-page">
-    
-    {/* <Navbar/> */}
-
         <div className="Search">
           <h2 className="search-heading" >Search Restaurants/Users</h2>
           <input
@@ -78,8 +70,7 @@ return (
               <h3 className="heading"> User Search: </h3>
               {searchResults.users.map(user => (
                 <div className="user-list-item"key={user._id}
-                onClick={() => navigate(`/profile/${user.username}`)}>
-                  
+                onClick={() => navigate(`/profile/${user.username}`)}>                  
                   {user.username} , Favorite Restaurant: {user.favRestaurant} , Favorite Cuisine: {user.favCuisine}
                 </div>
               ))}

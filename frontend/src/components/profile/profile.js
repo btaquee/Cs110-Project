@@ -197,7 +197,7 @@ function Profile({ user, setUser }) {
 
                 </div>
             ) : (
-                <p>How did you get here</p>
+                <p>What are you doing here. Please sign in to display your profile. </p>
             )}
         </div>
     );

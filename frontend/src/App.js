@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {BrowserRouter as Router, Routes, Route } from "react-router-dom"
 import { GoogleOAuthProvider } from '@react-oauth/google';
 import './App.css';
@@ -31,9 +31,7 @@ function App() {
         <Route path="/coupons" element={<Coupons user={user} />} />
         <Route path="/register" element={<Register />} />
         <Route path="/restaurant/:restaurantId" element={<RestaurantDetail user={user} />} />
-        <Route path="/profile/:friend" element={<OtherProfile user={user}/>} />
-        {/* <Route path="/navbar" element={<Navbar />} /> */}
-
+        <Route path="/profile/:friend" element={<OtherProfile />} />
       </Routes>
     </Router>
 
