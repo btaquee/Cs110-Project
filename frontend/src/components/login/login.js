@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import './login.css';
-// import Navbar from '../navbar/navbar.js';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import 'bootstrap/dist/js/bootstrap.bundle.min.js';
 import { useNavigate } from "react-router-dom";
@@ -17,7 +16,6 @@ function Login( {setUser} ) {
         
         if (!username.trim() || !password.trim()) return;
     
-
     const response = await fetch("http://localhost:3001/user/login", {
         method: 'POST',
         headers: {
@@ -42,7 +40,6 @@ function Login( {setUser} ) {
     
     return (
         <div className="layout">
-            {/* <Navbar /> */}
            <form onSubmit={handleLogin}>
             <div className="form-group">
                 <h1 className="header"> Login </h1>

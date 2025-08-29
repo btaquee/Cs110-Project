@@ -3,7 +3,7 @@ import './profile.css';
 import { useParams } from 'react-router-dom';
 import './profile.css';
 
-function OtherProfile( {user} ) {
+function OtherProfile( ) {
     const { friend } = useParams();
     const [profile, setProfile] = useState(null);
 
