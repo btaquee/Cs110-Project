@@ -1,7 +1,6 @@
 # dependencies
 node_modules/
 .env
-*.md
 
 .DS_Store
 **/.DS_Store
